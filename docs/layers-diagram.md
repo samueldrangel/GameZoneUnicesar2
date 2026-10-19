@@ -8,6 +8,7 @@ graph TD
         ProductService
         AccessoryService
         PersonService
+        PromotionService
         SaleService
     end
 
@@ -15,6 +16,7 @@ graph TD
         ProductRepository
         AccessoryRepository
         PersonRepository
+        PromotionRepository
         SaleRepository
     end
 
@@ -29,22 +31,29 @@ graph TD
         Controller
         Cable
         Memory
+        Promotion
+        PercentageDiscount
+        CategoryDiscount
+        BulkPurchaseDiscount
         Sale
     end
 
     ConsoleMenu --> ProductService
     ConsoleMenu --> AccessoryService
     ConsoleMenu --> PersonService
+    ConsoleMenu --> PromotionService
     ConsoleMenu --> SaleService
 
     ProductService --> ProductRepository
     AccessoryService --> AccessoryRepository
     PersonService --> PersonRepository
+    PromotionService --> PromotionRepository
     SaleService --> SaleRepository
 
     SaleService --> ProductService
     SaleService --> AccessoryService
     SaleService --> PersonService
+    SaleService --> PromotionService
 
     Service --> Model
     Persistence --> Model

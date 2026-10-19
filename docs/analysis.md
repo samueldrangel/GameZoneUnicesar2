@@ -64,3 +64,85 @@ Allowed dependencies flow strictly in a unidirectional, top-to-bottom direction 
 3. **Compatibility Representation**: Compatibility is a many-to-many relationship between accessories (specifically controllers and some memories) and consoles, represented as a list of compatible console IDs (`List<String> compatibleConsoleIds`) inside the `Accessory` class.
 4. **SaleService Modifications**: `SaleService.registerSale` must accept a unified list of sellable items (`Product`), validating stock and delegating inventory updates to either `ProductService` or `AccessoryService` dynamically based on the item type.
 5. **Layer Placement**: New classes are distributed across the four layers: `model` (`Accessory`, `Controller`, `Cable`, `Memory`), `persistence` (`AccessoryRepository`), `service` (`AccessoryService`), and integrated into `ui` and `service` (`SaleService`, `ConsoleUI`).
+
+
+# Promotion Module Analysis
+
+## 1. Class hierarchy and polymorphism
+
+The three promotions share data (id, name, start date, end date) and behavior
+(`isActive`), but they calculate the discount differently. This is modeled with
+an abstract base class `Promotion` and three concrete subclasses:
+`PercentageDiscount`, `CategoryDiscount` and `BulkPurchaseDiscount`. The common
+attributes and `isActive` live once in the base class, and each subclass adds
+only its own attributes and its own calculation.
+
+The mechanism that lets each type calculate differently is polymorphism through
+method overriding (dynamic binding). The rest of the system works with
+`Promotion` and calls `calculateDiscount(sale)`; the JVM runs the version of the
+real object at runtime. `PromotionService` and `SaleService` never check the
+concrete type, so adding a fourth promotion type does not require changing them.
+
+## 2. The abstract method
+
+In `Promotion` the method is declared without a body:
+
+```java
+public abstract double calculateDiscount(Sale sale);
+```
+
+An abstract method can only exist inside an abstract class. The declaration
+guarantees that every concrete subclass must implement it, otherwise the code
+does not compile. It also fixes a single contract (input `Sale`, output the
+discount amount) that every client can rely on. Subclasses mark their
+implementation with `@Override`, so the compiler also detects signature
+mistakes.
+
+## 3. Where is the "best promotion" selection?
+
+The selection lives in `PromotionService.findBestPromotionFor(Sale sale)`, in
+the service layer. The service already owns the list of promotions and applies
+business rules, so it is the right place to compare them and choose the one with
+the highest monetary discount.
+
+It is consistent with the layered architecture: the service sits between the ui
+and persistence/model and holds rules that involve several entities.
+
+It must not be in `Sale` because the model entity should not know the catalog of
+promotions. If it did, `Sale` would depend on `Promotion` and would have two
+reasons to change (sale data and promotion policy), which hurts cohesion. It
+must not be in the console menu because the ui layer only collects input and
+prints output. A rule placed there would be duplicated by any other interface
+and could not be reused or tested without the console.
+
+## 4. Changes in `Sale` and the receipt
+
+- `Sale` gets two private attributes, `appliedPromotionName` (String) and
+  `discountAmount` (double), with getters and setters.
+- `getSubtotal()` returns the sum of item prices. `getTotalAmount()` now returns
+  `subtotal - discountAmount`.
+- `generateReceipt()` prints the subtotal, the discount with the promotion name
+  and the final total.
+- `SaleRepository` stores the promotion name and the discount as two extra
+  columns.
+- `SaleService.registerSale` asks `PromotionService` for the best promotion and
+  sets the two attributes.
+
+These changes do not break existing behavior. `discountAmount` defaults to 0, so
+a sale without promotion has the same total as before. Old lines in
+`sales.csv` have fewer columns, and the loader treats the missing columns as
+"no promotion". `Sale` does not depend on `Promotion`; it only stores the name.
+
+## 5. Where is the validity check?
+
+In both classes, with different responsibilities.
+
+- `Promotion.isActive(LocalDate date)` knows its own start and end dates, so it
+  is the expert on whether a date falls inside its range (Information Expert).
+- `PromotionService` decides which date to use (the current date or the sale
+  date) and filters the whole list by calling `isActive` on each promotion. This
+  is the logic of `listActivePromotions` and of `findBestPromotionFor`.
+
+Putting the range check only in the service would force it to read the dates of
+each promotion; putting the filtering only in the model would make `Promotion`
+aware of the whole catalog.
