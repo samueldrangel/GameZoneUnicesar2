@@ -29,6 +29,10 @@ public class ConsoleUI {
         this.scanner = new Scanner(System.in);
     }
 
+    public ConsoleUI() {
+    }
+    
+
     public void showMainMenu() {
         int option;
         do {
