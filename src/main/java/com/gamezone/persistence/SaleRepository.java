@@ -1,8 +1,10 @@
 package com.gamezone.persistence;
 
-import com.gamezone.model.*;
-import com.gamezone.service.PersonService;
-import com.gamezone.service.ProductService;
+import com.gamezone.model.Customer;
+import com.gamezone.model.Person;
+import com.gamezone.model.Product;
+import com.gamezone.model.Sale;
+import com.gamezone.model.Seller;
 import java.io.*;
 import java.nio.file.*;
 import java.time.LocalDate;
@@ -10,23 +12,39 @@ import java.util.*;
 
 /**
  * Persistence for sales transactions.
- * 
- * @author Samuel David Rangel Martinez
+ * Each line: id,date,customerId,sellerId,itemId1;itemId2,total,promotionName,discount
  */
 public class SaleRepository {
     private static final String FILE_PATH = "data/sales.csv";
 
+    /**
+     * Creates the repository.
+     */
+    public SaleRepository() {
+    }
+
+    /**
+     * Saves all sales to the CSV file.
+     *
+     * @param sales the sales to save
+     */
     public void saveAll(List<Sale> sales) {
         try {
             Path path = Paths.get(FILE_PATH);
             if (path.getParent() != null) Files.createDirectories(path.getParent());
             try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_PATH))) {
                 for (Sale s : sales) {
-                    writer.println(s.getSaleId() + "," + s.getDate() + "," + 
-                                   s.getCustomer().getId() + "," + 
-                                   s.getSeller().getId() + "," + 
-                                   s.getProduct().getId() + "," + 
-                                   s.getQuantity() + "," + s.getTotalAmount());
+                    List<String> ids = new ArrayList<>();
+                    for (Product item : s.getItems()) {
+                        ids.add(item.getId());
+                    }
+                    writer.println(s.getSaleId() + "," + s.getDate() + ","
+                            + s.getCustomer().getId() + ","
+                            + s.getSeller().getId() + ","
+                            + String.join(";", ids) + ","
+                            + s.getTotalAmount() + ","
+                            + (s.getAppliedPromotionName() == null ? "" : s.getAppliedPromotionName()) + ","
+                            + s.getDiscountAmount());
                 }
             }
         } catch (IOException e) {
@@ -34,32 +52,59 @@ public class SaleRepository {
         }
     }
 
-    public SaleRepository() {
-    }
-    
-    
-
-    public List<Sale> loadAll(PersonService personService, ProductService productService) {
+    /**
+     * Loads all sales, rebuilding the references from the given lists.
+     *
+     * @param persons  all customers and sellers
+     * @param products all products, including accessories
+     * @return the loaded sales, or an empty list if the file does not exist
+     */
+    public List<Sale> loadAll(List<Person> persons, List<Product> products) {
         List<Sale> sales = new ArrayList<>();
         File file = new File(FILE_PATH);
         if (!file.exists()) return sales;
+
+        Map<String, Person> personsById = new HashMap<>();
+        for (Person p : persons) personsById.put(p.getId(), p);
+        Map<String, Product> productsById = new HashMap<>();
+        for (Product p : products) productsById.put(p.getId(), p);
+
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length < 7) continue;
-                String saleId = parts[0];
-                LocalDate date = LocalDate.parse(parts[1]);
-                Customer customer = personService.findCustomerById(parts[2]);
-                Seller seller = personService.findSellerById(parts[3]);
-                Product product = productService.findById(parts[4]);
-                int quantity = Integer.parseInt(parts[5]);
+                if (line.isBlank()) continue;
+                String[] parts = line.split(",", -1);
+                if (parts.length < 6) continue;
 
-                if (customer != null && seller != null && product != null) {
-                    sales.add(new Sale(saleId, date, customer, seller, product, quantity));
+                try {
+                    Person customer = personsById.get(parts[2]);
+                    Person seller = personsById.get(parts[3]);
+                    if (!(customer instanceof Customer) || !(seller instanceof Seller)) continue;
+
+                    List<Product> items = new ArrayList<>();
+                    boolean complete = true;
+                    for (String id : parts[4].split(";")) {
+                        Product item = productsById.get(id);
+                        if (item == null) { complete = false; break; }
+                        items.add(item);
+                    }
+                    if (!complete || items.isEmpty()) {
+                        System.err.println("Skipping sale with missing data: " + parts[0]);
+                        continue;
+                    }
+
+                    Sale sale = new Sale(parts[0], LocalDate.parse(parts[1]),
+                            (Customer) customer, (Seller) seller, items);
+                    if (parts.length >= 8 && !parts[6].isEmpty()) {
+                        sale.setAppliedPromotionName(parts[6]);
+                        sale.setDiscountAmount(Double.parseDouble(parts[7]));
+                    }
+                    sales.add(sale);
+                } catch (RuntimeException e) {
+                    System.err.println("Skipping invalid sale line: " + line);
                 }
             }
-        } catch (IOException | NumberFormatException e) {
+        } catch (IOException e) {
             System.err.println("Error loading sales: " + e.getMessage());
         }
         return sales;
