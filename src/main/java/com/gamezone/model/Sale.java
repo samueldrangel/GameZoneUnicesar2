@@ -105,4 +105,11 @@ public class Sale {
         sb.append(String.format("Total final: $%.2f", getTotalAmount()));
         return sb.toString();
     }
+    
+    /**
+     * @return true if today is within 30 calendar days after the sale date
+     */
+    public boolean canBeReturned() {
+        return !LocalDate.now().isAfter(date.plusDays(30));
+    }
 }
