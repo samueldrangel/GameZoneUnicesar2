@@ -34,6 +34,11 @@ public class SaleRepository {
         }
     }
 
+    public SaleRepository() {
+    }
+    
+    
+
     public List<Sale> loadAll(PersonService personService, ProductService productService) {
         List<Sale> sales = new ArrayList<>();
         File file = new File(FILE_PATH);
