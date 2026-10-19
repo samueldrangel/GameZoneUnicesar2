@@ -1,41 +1,22 @@
-# Hierarchy Diagram - GameZoneUnicesar
-
 ```mermaid
 classDiagram
-    class Person {
-        <<abstract>>
-        -String id
-        -String name
-        -String phone
-    }
-    class Customer {
-        -String email
-    }
-    class Seller {
-        -String employeeCode
-        -String workShift
-    }
+    class Person { <<abstract>> }
+    class Customer
+    class Seller
+    class Product { <<abstract>> }
+    class VideoGame
+    class Console
+    class Accessory { <<abstract>> }
+    class Controller
+    class Cable
+    class Memory
+
     Person <|-- Customer
     Person <|-- Seller
-
-    class Product {
-        <<abstract>>
-        -String id
-        -String title
-        -double price
-        -int stock
-        +getDescription()*
-    }
-    class VideoGame {
-        -String platform
-        -String genre
-        -String ageRating
-    }
-    class Console {
-        -String brand
-        -String model
-        -String generation
-    }
     Product <|-- VideoGame
     Product <|-- Console
-    
+    Product <|-- Accessory
+    Accessory <|-- Controller
+    Accessory <|-- Cable
+    Accessory <|-- Memory
+```
