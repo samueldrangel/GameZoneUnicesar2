@@ -1,44 +1,45 @@
 package com.gamezone.service;
 
-import com.gamezone.model.*;
-import com.gamezone.persistence.SaleRepository;
-import java.time.LocalDate;
+import com.gamezone.model.Accessory;
+import com.gamezone.model.Product;
+import com.gamezone.model.Customer;
+import com.gamezone.model.Seller;
+
 import java.util.List;
 
 /**
- * Service for managing sales operations and business rules.
- * 
- * @author Samuel David Rangel Martinez
+ * Service managing sales operations, validation rules, and stock updates for products and accessories.
  */
 public class SaleService {
-    private SaleRepository repository;
-    private List<Sale> sales;
     private ProductService productService;
+    private AccessoryService accessoryService;
 
-    public SaleService(PersonService personService, ProductService productService) {
+    public SaleService(ProductService productService, AccessoryService accessoryService) {
         this.productService = productService;
-        this.repository = new SaleRepository();
-        this.sales = repository.loadAll(personService, productService);
+        this.accessoryService = accessoryService;
     }
 
-    public List<Sale> listAllSales() {
-        return sales;
-    }
-
-    public boolean registerSale(String saleId, Customer customer, Seller seller, Product product, int quantity) {
-        if (product.getStock() < quantity) {
-            System.out.println("Error: Insufficient stock for product " + product.getTitle());
+    public boolean registerSale(String id, Customer customer, Seller seller, List<Product> purchasedItems) {
+        if (purchasedItems == null || purchasedItems.isEmpty()) {
             return false;
         }
 
-        Sale newSale = new Sale(saleId, LocalDate.now(), customer, seller, product, quantity);
-        sales.add(newSale);
-        
-        // Update product stock through ProductService
-        productService.updateStock(product.getId(), quantity);
-        
-        // Save sales
-        repository.saveAll(sales);
+        // Validate stock for all items (products and accessories)
+        for (Product item : purchasedItems) {
+            if (item.getStock() <= 0) {
+                return false;
+            }
+        }
+
+        // Deduct inventory dynamically based on the item type
+        for (Product item : purchasedItems) {
+            if (item instanceof Accessory) {
+                accessoryService.updateStock(item.getId(), 1);
+            } else {
+                productService.updateStock(item.getId(), 1);
+            }
+        }
+
         return true;
     }
 }
