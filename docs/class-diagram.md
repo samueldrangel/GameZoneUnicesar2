@@ -1,98 +1,53 @@
 ```mermaid
 classDiagram
-    class Promotion {
-        <<abstract>>
-        -String id
-        -String name
-        -LocalDate startDate
-        -LocalDate endDate
-        +getId() String
-        +getName() String
-        +getStartDate() LocalDate
-        +getEndDate() LocalDate
-        +setName(String name) void
-        +setStartDate(LocalDate startDate) void
-        +setEndDate(LocalDate endDate) void
-        +isActive(LocalDate date) boolean
-        +calculateDiscount(Sale sale)* double
-    }
-    class PercentageDiscount {
-        -double percentage
-        +getPercentage() double
-        +setPercentage(double percentage) void
-        +calculateDiscount(Sale sale) double
-    }
-    class CategoryDiscount {
-        -double percentage
-        -String targetCategory
-        +getPercentage() double
-        +getTargetCategory() String
-        +setPercentage(double percentage) void
-        +setTargetCategory(String targetCategory) void
-        +calculateDiscount(Sale sale) double
-    }
-    class BulkPurchaseDiscount {
-        -int minimumQuantity
-        -double percentage
-        +getMinimumQuantity() int
-        +getPercentage() double
-        +setMinimumQuantity(int minimumQuantity) void
-        +setPercentage(double percentage) void
-        +calculateDiscount(Sale sale) double
+    class Return {
+        -String returnId
+        -LocalDate date
+        -Sale sale
+        -List~Product~ returnedProducts
+        -String reason
+        -double warrantyRefund
+        -double refundAmount
+        +calculateRefundAmount() double
+        +generateReturnReceipt() String
     }
     class Sale {
-        -String saleId
-        -LocalDate date
-        -List~Product~ items
-        -String appliedPromotionName
-        -double discountAmount
+        +canBeReturned() boolean
         +getSubtotal() double
-        +getTotalAmount() double
-        +getAppliedPromotionName() String
-        +setAppliedPromotionName(String name) void
         +getDiscountAmount() double
-        +setDiscountAmount(double amount) void
-        +generateReceipt() String
     }
-    class Product {
-        <<abstract>>
-        -double price
-        +getPrice() double
+    class ReturnRepository {
+        +saveAll(List~Return~ returns) void
+        +loadAll(List~Sale~ sales) List~Return~
     }
-    class PromotionRepository {
-        +saveAll(List~Promotion~ promotions) void
-        +loadAll() List~Promotion~
+    class ReturnService {
+        -ReturnRepository repository
+        -SaleService saleService
+        -ProductService productService
+        -AccessoryService accessoryService
+        -WarrantyService warrantyService
+        +registerReturn(String saleId, List~String~ productIds, String reason) Return
+        +viewAllReturns() List~Return~
+        +viewReturnsByCustomer(String customerId) List~Return~
+        +viewReturnsBySale(String saleId) List~Return~
+        +calculateMonthlySales(int month, int year) double
+        +calculateMonthlyReturns(int month, int year) double
+        +generateMonthlyBalance(int month, int year) double
     }
-    class PromotionService {
-        -PromotionRepository repository
-        +registerPercentageDiscount(...) boolean
-        +registerCategoryDiscount(...) boolean
-        +registerBulkPurchaseDiscount(...) boolean
-        +listAllPromotions() List~Promotion~
-        +listActivePromotions() List~Promotion~
-        +findBestPromotionFor(Sale sale) Promotion
-        +findById(String id) Promotion
-    }
-    class SaleService {
-        -PromotionService promotionService
-        +registerSale(...) boolean
-        +findSaleById(String saleId) Sale
-    }
-    class ConsoleMenu {
-        -PromotionService promotionService
-    }
+    class ProductService { +restoreStock(String id, int quantity) boolean }
+    class AccessoryService { +restoreStock(String id, int quantity) boolean }
+    class WarrantyService { +cancelWarranties(String productId, String saleId) double }
+    class SaleService
+    class Product { <<abstract>> }
+    class ConsoleMenu
 
-    Promotion <|-- PercentageDiscount
-    Promotion <|-- CategoryDiscount
-    Promotion <|-- BulkPurchaseDiscount
-
-    Promotion ..> Sale : reads items and subtotal
-    CategoryDiscount ..> Product : checks category
-    Sale "1" --> "1..*" Product : contains
-    PromotionRepository ..> Promotion
-    PromotionService --> PromotionRepository
-    SaleService --> PromotionService
-    SaleService ..> Sale
-    ConsoleMenu --> PromotionService
-    ConsoleMenu --> SaleService
+    Return "*" --> "1" Sale : refers to
+    Return "1" --> "1..*" Product : returns
+    ReturnRepository ..> Return
+    ReturnService --> ReturnRepository
+    ReturnService --> SaleService
+    ReturnService --> ProductService
+    ReturnService --> AccessoryService
+    ReturnService --> WarrantyService
+    ConsoleMenu --> ReturnService
 ```
