@@ -1,53 +1,55 @@
 ```mermaid
 classDiagram
-    class Return {
-        -String returnId
-        -LocalDate date
+    class Warranty {
+        <<abstract>>
+        -String id
+        -Product product
         -Sale sale
-        -List~Product~ returnedProducts
-        -String reason
-        -double warrantyRefund
-        -double refundAmount
-        +calculateRefundAmount() double
-        +generateReturnReceipt() String
+        -LocalDate startDate
+        -LocalDate endDate
+        +getDurationInMonths()* int
+        +getWarrantyType()* String
+        +getAdditionalCost()* double
+        +isActive(LocalDate date) boolean
+        +generateWarrantyCertificate() String
+    }
+    class BasicWarranty
+    class ExtendedWarranty
+    class WarrantyRepository {
+        +saveAll(List~Warranty~ warranties) void
+        +loadAll(List~Sale~ sales, List~Product~ products) List~Warranty~
+    }
+    class WarrantyService {
+        -WarrantyRepository repository
+        +loadStored(List~Sale~ sales, List~Product~ products) void
+        +assignBasicWarranty(Product p, Sale s, LocalDate d) BasicWarranty
+        +assignExtendedWarranty(Product p, Sale s, LocalDate d) ExtendedWarranty
+        +findWarrantyByProduct(String productId, String saleId) Warranty
+        +listAllWarranties() List~Warranty~
+        +listActiveWarranties() List~Warranty~
+        +listWarrantiesExpiringSoon(int daysAhead) List~Warranty~
     }
     class Sale {
-        +canBeReturned() boolean
-        +getSubtotal() double
-        +getDiscountAmount() double
+        -double extendedWarrantyCost
+        +getTotalAmount() double
     }
-    class ReturnRepository {
-        +saveAll(List~Return~ returns) void
-        +loadAll(List~Sale~ sales) List~Return~
-    }
-    class ReturnService {
-        -ReturnRepository repository
-        -SaleService saleService
-        -ProductService productService
-        -AccessoryService accessoryService
+    class SaleService {
         -WarrantyService warrantyService
-        +registerReturn(String saleId, List~String~ productIds, String reason) Return
-        +viewAllReturns() List~Return~
-        +viewReturnsByCustomer(String customerId) List~Return~
-        +viewReturnsBySale(String saleId) List~Return~
-        +calculateMonthlySales(int month, int year) double
-        +calculateMonthlyReturns(int month, int year) double
-        +generateMonthlyBalance(int month, int year) double
+        +registerSale(Customer c, Seller s, List~Product~ items, List~String~ extendedIds) boolean
     }
-    class ProductService { +restoreStock(String id, int quantity) boolean }
-    class AccessoryService { +restoreStock(String id, int quantity) boolean }
-    class WarrantyService { +cancelWarranties(String productId, String saleId) double }
-    class SaleService
     class Product { <<abstract>> }
+    class Console
     class ConsoleMenu
 
-    Return "*" --> "1" Sale : refers to
-    Return "1" --> "1..*" Product : returns
-    ReturnRepository ..> Return
-    ReturnService --> ReturnRepository
-    ReturnService --> SaleService
-    ReturnService --> ProductService
-    ReturnService --> AccessoryService
-    ReturnService --> WarrantyService
-    ConsoleMenu --> ReturnService
+    Warranty <|-- BasicWarranty
+    Warranty <|-- ExtendedWarranty
+    Warranty "*" --> "1" Product : covers
+    Warranty "*" --> "1" Sale : issued in
+    Product <|-- Console
+    WarrantyRepository ..> Warranty
+    WarrantyService --> WarrantyRepository
+    SaleService --> WarrantyService
+    SaleService ..> Console : instanceof
+    ConsoleMenu --> WarrantyService
+    ConsoleMenu --> SaleService
 ```
