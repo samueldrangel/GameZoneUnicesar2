@@ -5,10 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A sale transaction with one or more items (products or accessories).
- * It may carry the discount granted by a promotion.
+ * A sale transaction with one or more items (products or accessories). It may
+ * carry the discount granted by a promotion.
  */
 public class Sale {
+
     private String saleId;
     private LocalDate date;
     private Customer customer;
@@ -20,11 +21,11 @@ public class Sale {
     /**
      * Creates a sale without discount.
      *
-     * @param saleId   unique sale identifier
-     * @param date     sale date
+     * @param saleId unique sale identifier
+     * @param date sale date
      * @param customer the buyer
-     * @param seller   the seller who attended the sale
-     * @param items    the sold items; must contain at least one
+     * @param seller the seller who attended the sale
+     * @param items the sold items; must contain at least one
      * @throws IllegalArgumentException if the item list is null or empty
      */
     public Sale(String saleId, LocalDate date, Customer customer, Seller seller, List<Product> items) {
@@ -40,25 +41,63 @@ public class Sale {
         this.discountAmount = 0;
     }
 
-    public String getSaleId() { return saleId; }
-    public LocalDate getDate() { return date; }
-    public Customer getCustomer() { return customer; }
-    public Seller getSeller() { return seller; }
-    public List<Product> getItems() { return new ArrayList<>(items); }
+    private double extendedWarrantyCost;
 
-    /** @return the name of the applied promotion, or null if none was applied */
-    public String getAppliedPromotionName() { return appliedPromotionName; }
+    public double getExtendedWarrantyCost() {
+        return extendedWarrantyCost;
+    }
 
-    /** @param appliedPromotionName the name of the applied promotion */
+    public void setExtendedWarrantyCost(double cost) {
+        this.extendedWarrantyCost = cost;
+    }
+
+    public String getSaleId() {
+        return saleId;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public Seller getSeller() {
+        return seller;
+    }
+
+    public List<Product> getItems() {
+        return new ArrayList<>(items);
+    }
+
+    /**
+     * @return the name of the applied promotion, or null if none was applied
+     */
+    public String getAppliedPromotionName() {
+        return appliedPromotionName;
+    }
+
+    /**
+     * @param appliedPromotionName the name of the applied promotion
+     */
     public void setAppliedPromotionName(String appliedPromotionName) {
         this.appliedPromotionName = appliedPromotionName;
     }
 
-    /** @return the discount in pesos (0 if no promotion was applied) */
-    public double getDiscountAmount() { return discountAmount; }
+    /**
+     * @return the discount in pesos (0 if no promotion was applied)
+     */
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
 
-    /** @param discountAmount the discount in pesos */
-    public void setDiscountAmount(double discountAmount) { this.discountAmount = discountAmount; }
+    /**
+     * @param discountAmount the discount in pesos
+     */
+    public void setDiscountAmount(double discountAmount) {
+        this.discountAmount = discountAmount;
+    }
 
     /**
      * Calculates the subtotal as the sum of the item prices.
@@ -67,7 +106,9 @@ public class Sale {
      */
     public double getSubtotal() {
         double total = 0;
-        for (Product item : items) total += item.getPrice();
+        for (Product item : items) {
+            total += item.getPrice();
+        }
         return total;
     }
 
@@ -77,11 +118,12 @@ public class Sale {
      * @return the subtotal minus the applied discount
      */
     public double getTotalAmount() {
-        return getSubtotal() - discountAmount;
+        return getSubtotal() - discountAmount + extendedWarrantyCost;
     }
 
     /**
-     * Builds the sale receipt with the subtotal, the discount and the final total.
+     * Builds the sale receipt with the subtotal, the discount and the final
+     * total.
      *
      * @return the receipt text, in Spanish
      */
@@ -105,11 +147,12 @@ public class Sale {
         sb.append(String.format("Total final: $%.2f", getTotalAmount()));
         return sb.toString();
     }
-    
+
     /**
      * @return true if today is within 30 calendar days after the sale date
      */
     public boolean canBeReturned() {
         return !LocalDate.now().isAfter(date.plusDays(30));
     }
+
 }
