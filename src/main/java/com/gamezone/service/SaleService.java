@@ -20,25 +20,27 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Service managing sales operations, validation rules, promotion applications, and stock updates.
+ * Service managing sales operations, validation rules, promotion applications, stock updates, and warranties.
  */
 public class SaleService {
-    private static final String FILE_PATH = "sales.csv";
+    private static final String FILE_PATH = "data/sales.csv";
     private final SaleRepository repository;
     private final ProductService productService;
     private final AccessoryService accessoryService;
     private final PersonService personService;
     private final PromotionService promotionService;
+    private final WarrantyService warrantyService; // Servicio de garantías integrado
     private final List<Sale> sales;
 
     public SaleService(SaleRepository repository, ProductService productService,
                        AccessoryService accessoryService, PersonService personService,
-                       PromotionService promotionService) {
+                       PromotionService promotionService, WarrantyService warrantyService) {
         this.repository = repository;
         this.productService = productService;
         this.accessoryService = accessoryService;
         this.personService = personService;
         this.promotionService = promotionService;
+        this.warrantyService = warrantyService;
 
         // Combinar productos y accesorios para pasárselos a SaleRepository.loadAll
         List<Product> allCatalog = new ArrayList<>(productService.listAllProducts());
@@ -50,39 +52,48 @@ public class SaleService {
     }
 
     /**
-     * Registers a sale with a list of purchased items, validates stock availability,
-     * updates inventory, evaluates and applies the best promotion, and persists the transaction.
-     *
-     * @param id             unique sale identifier
-     * @param customer       the buyer
-     * @param seller         the seller
-     * @param purchasedItems list of products/accessories bought
-     * @return true if registered successfully, false otherwise
+     * Registers a sale delegating to the extended warranty version with an empty list.
      */
-    public boolean registerSale(String id, Customer customer, Seller seller, List<Product> purchasedItems) {
-        if (id == null || id.isBlank() || customer == null || seller == null 
-                || purchasedItems == null || purchasedItems.isEmpty()) {
+    public boolean registerSale(String saleId, Customer customer, Seller seller, List<Product> items) {
+        return registerSale(saleId, customer, seller, items, new ArrayList<>());
+    }
+
+    /**
+     * Registers a sale with a list of purchased items, warranty assignments, stock validation,
+     * inventory updates, promotion evaluation, and transaction persistence.
+     */
+    public boolean registerSale(String saleId, Customer customer, Seller seller,
+            List<Product> items, List<String> productIdsWithExtendedWarranty) {
+        if (saleId == null || saleId.isBlank() || customer == null || seller == null 
+                || items == null || items.isEmpty()) {
             return false;
         }
 
         // 1. Validar disponibilidad de stock para cada ítem
-        for (Product item : purchasedItems) {
+        for (Product item : items) {
             if (item == null || item.getStock() <= 0) {
                 return false;
             }
         }
 
-        // 2. Descontar inventario dinámicamente según el tipo de producto
-        for (Product item : purchasedItems) {
-            if (item instanceof Accessory) {
-                accessoryService.updateStock(item.getId(), 1);
-            } else {
-                productService.updateStock(item.getId(), 1);
+        // 2. Crear la transacción de venta preliminar para asociarla a las garantías
+        Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, items);
+
+        // 3. Procesar garantías para consolas y calcular costo de garantía extendida
+        double extendedCost = 0;
+        for (Product item : items) {
+            if (item instanceof com.gamezone.model.Console) {
+                if (warrantyService != null) {
+                    warrantyService.assignBasicWarranty(item, sale, sale.getDate());
+                    if (productIdsWithExtendedWarranty != null
+                            && productIdsWithExtendedWarranty.contains(item.getId())) {
+                        extendedCost += warrantyService
+                                .assignExtendedWarranty(item, sale, sale.getDate()).getAdditionalCost();
+                    }
+                }
             }
         }
-
-        // 3. Crear la transacción de venta
-        Sale sale = new Sale(id, LocalDate.now(), customer, seller, purchasedItems);
+        sale.setExtendedWarrantyCost(extendedCost);
 
         // 4. Evaluar y aplicar la mejor promoción si PromotionService está disponible
         if (promotionService != null) {
@@ -96,7 +107,16 @@ public class SaleService {
             }
         }
 
-        // 5. Agregar a la lista local y guardar en el repositorio
+        // 5. Descontar inventario dinámicamente según el tipo de producto
+        for (Product item : items) {
+            if (item instanceof Accessory) {
+                accessoryService.updateStock(item.getId(), 1);
+            } else {
+                productService.updateStock(item.getId(), 1);
+            }
+        }
+
+        // 6. Agregar a la lista local y guardar en el repositorio
         sales.add(sale);
         repository.saveAll(sales);
 
@@ -109,18 +129,7 @@ public class SaleService {
     public List<Sale> listAllSales() {
         return new ArrayList<>(sales);
     }
-    /**
-     * Finds a sale by its unique identifier.
-     * 
-     * @param id the unique identifier of the sale
-     * @return the Sale object if found, or null if it does not exist
-     */
-    /**
-     * Finds a sale by its unique identifier.
-     * 
-     * @param id the unique identifier of the sale
-     * @return the Sale object if found, or null if it does not exist
-     */
+
     /**
      * Finds a sale by its unique identifier.
      * 
@@ -186,6 +195,10 @@ public class SaleService {
                     if (parts.length >= 8 && !parts[6].isEmpty()) {
                         sale.setAppliedPromotionName(parts[6]);
                         sale.setDiscountAmount(Double.parseDouble(parts[7]));
+                    }
+
+                    if (parts.length >= 9 && !parts[8].isEmpty()) {
+                        sale.setExtendedWarrantyCost(Double.parseDouble(parts[8]));
                     }
                     
                     return sale;
