@@ -5,6 +5,7 @@ import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SaleRepository;
+import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.*;
 
 import java.time.LocalDate;
@@ -14,7 +15,7 @@ import java.util.Scanner;
 
 /**
  * Interfaz de menú interactivo por consola completa con gestión de productos,
- * accesorios, personas, ventas, promociones y devoluciones.
+ * accesorios, personas, ventas, promociones, devoluciones y garantías.
  *
  * @author Samuel Angulo
  */
@@ -24,6 +25,7 @@ public class ConsoleUI {
     private AccessoryService accessoryService;
     private PersonService personService;
     private PromotionService promotionService;
+    private WarrantyService warrantyService; // Servicio de garantías integrado
     private SaleService saleService;
     private ReturnService returnService; // Servicio de devoluciones integrado
     private Scanner scanner;
@@ -33,10 +35,13 @@ public class ConsoleUI {
         this.accessoryService = new AccessoryService(new AccessoryRepository());
         this.personService = new PersonService();
         this.promotionService = new PromotionService(new PromotionRepository());
-        this.saleService = new SaleService(new SaleRepository(), productService, accessoryService, personService, promotionService);
+        
+        // Inicialización del servicio de garantías con su repositorio
+        this.warrantyService = new WarrantyService(new WarrantyRepository());
+        
+        this.saleService = new SaleService(new SaleRepository(), productService, accessoryService, personService, promotionService, warrantyService);
 
-        // Inicialización correcta de ReturnService con sus 3 dependencias requeridas
-        ReturnRepository returnRepository = new ReturnRepository();
+        // Inicialización correcta de ReturnService con sus dependencias
         this.returnService = new ReturnService(new ReturnRepository(), saleService, productService, accessoryService);
         this.scanner = new Scanner(System.in);
     }
@@ -63,6 +68,7 @@ public class ConsoleUI {
             System.out.println("14. Registrar descuento por categoría");
             System.out.println("15. Registrar descuento por compra al por mayor");
             System.out.println("16. Gestión de devoluciones");
+            System.out.println("17. Gestión de garantías");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opción: ");
 
@@ -116,6 +122,9 @@ public class ConsoleUI {
                     break;
                 case 16:
                     showReturnMenu();
+                    break;
+                case 17:
+                    showWarrantyMenu();
                     break;
                 case 0:
                     System.out.println("Saliendo de la aplicación. ¡Hasta luego!");
@@ -227,6 +236,49 @@ public class ConsoleUI {
             for (Return r : list) {
                 System.out.println(r.generateReturnReceipt() + "\n");
             }
+        }
+    }
+
+    // --- MÓDULO DE GARANTÍAS ---
+    private void showWarrantyMenu() {
+        int option;
+        do {
+            System.out.println("\n--- GESTIÓN DE GARANTÍAS ---");
+            System.out.println("1. Consultar garantía de un producto en una venta");
+            System.out.println("2. Listar todas las garantías");
+            System.out.println("3. Listar garantías vigentes");
+            System.out.println("4. Listar garantías próximas a vencer");
+            System.out.println("0. Volver");
+            option = readInt("Seleccione una opción: ");
+            try {
+                switch (option) {
+                    case 1:
+                        String saleId = readLine("ID de la venta: ");
+                        String productId = readLine("ID del producto: ");
+                        Warranty w = warrantyService.findWarrantyByProduct(productId, saleId);
+                        System.out.println(w == null ? "No existe garantía para ese producto en esa venta."
+                                : w.generateWarrantyCertificate());
+                        break;
+                    case 2: printWarranties("TODAS LAS GARANTÍAS", warrantyService.listAllWarranties()); break;
+                    case 3: printWarranties("GARANTÍAS VIGENTES", warrantyService.listActiveWarranties()); break;
+                    case 4: printWarranties("GARANTÍAS PRÓXIMAS A VENCER",
+                            warrantyService.listWarrantiesExpiringSoon(readInt("Días de anticipación: "))); break;
+                    case 0: break;
+                    default: System.out.println("Opción inválida.");
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println("No se pudo completar la operación: " + e.getMessage());
+            }
+        } while (option != 0);
+    }
+
+    private void printWarranties(String title, List<Warranty> list) {
+        System.out.println("\n--- " + title + " ---");
+        if (list.isEmpty()) System.out.println("No hay garantías para mostrar.");
+        for (Warranty w : list) {
+            System.out.println("- " + w.getId() + " | " + w.getWarrantyType() + " | "
+                    + w.getProduct().getTitle() + " | Venta " + w.getSale().getSaleId()
+                    + " | Vence: " + w.getEndDate());
         }
     }
 
@@ -378,6 +430,7 @@ public class ConsoleUI {
         }
 
         List<Product> purchasedItems = new ArrayList<>();
+        List<String> warrantiesWithExtended = new ArrayList<>();
         String choice;
         do {
             String itemId = readLine("Ingrese ID del producto o accesorio a agregar: ");
@@ -390,6 +443,14 @@ public class ConsoleUI {
             if (product != null) {
                 purchasedItems.add(product);
                 System.out.println("Ítem agregado al carrito de venta.");
+                
+                // Si es una consola, preguntar si desea garantía extendida
+                if (product instanceof com.gamezone.model.Console) {
+                    String extOpt = readLine("¿Desea agregar garantía extendida para esta consola? (s/n): ");
+                    if (extOpt.equalsIgnoreCase("s") || extOpt.equalsIgnoreCase("y")) {
+                        warrantiesWithExtended.add(product.getId());
+                    }
+                }
             } else {
                 System.out.println("¡Producto o accesorio no encontrado!");
             }
@@ -402,7 +463,7 @@ public class ConsoleUI {
             return;
         }
 
-        boolean success = saleService.registerSale(saleId, customer, seller, purchasedItems);
+        boolean success = saleService.registerSale(saleId, customer, seller, purchasedItems, warrantiesWithExtended);
         if (success) {
             System.out.println("¡Venta registrada exitosamente!");
         } else {
