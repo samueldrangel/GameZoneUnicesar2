@@ -13,12 +13,13 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Interfaz de menú interactivo por consola completa con gestión de productos, 
+ * Interfaz de menú interactivo por consola completa con gestión de productos,
  * accesorios, personas, ventas, promociones y devoluciones.
- * 
+ *
  * @author Samuel Angulo
  */
 public class ConsoleUI {
+
     private ProductService productService;
     private AccessoryService accessoryService;
     private PersonService personService;
@@ -33,11 +34,10 @@ public class ConsoleUI {
         this.personService = new PersonService();
         this.promotionService = new PromotionService(new PromotionRepository());
         this.saleService = new SaleService(new SaleRepository(), productService, accessoryService, personService, promotionService);
-        
+
         // Inicialización correcta de ReturnService con sus 3 dependencias requeridas
         ReturnRepository returnRepository = new ReturnRepository();
-        this.returnService = new ReturnService(returnRepository, saleService, productService);
-        
+        this.returnService = new ReturnService(new ReturnRepository(), saleService, productService, accessoryService);
         this.scanner = new Scanner(System.in);
     }
 
@@ -65,7 +65,7 @@ public class ConsoleUI {
             System.out.println("16. Gestión de devoluciones");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opción: ");
-            
+
             option = readInt("");
 
             switch (option) {
@@ -127,7 +127,6 @@ public class ConsoleUI {
     }
 
     // --- MÉTODOS AUXILIARES DE ENTRADA ---
-
     private int readInt(String prompt) {
         while (true) {
             if (!prompt.isEmpty()) {
@@ -160,7 +159,6 @@ public class ConsoleUI {
     }
 
     // --- MÓDULO DE DEVOLUCIONES ---
-
     private void showReturnMenu() {
         int option;
         do {
@@ -174,19 +172,19 @@ public class ConsoleUI {
             option = readInt("Seleccione una opción: ");
             try {
                 switch (option) {
-                    case 1: 
-                        registerReturn(); 
+                    case 1:
+                        registerReturn();
                         break;
-                    case 2: 
-                        printReturns("TODAS LAS DEVOLUCIONES", returnService.viewAllReturns()); 
+                    case 2:
+                        printReturns("TODAS LAS DEVOLUCIONES", returnService.viewAllReturns());
                         break;
-                    case 3: 
+                    case 3:
                         printReturns("DEVOLUCIONES DEL CLIENTE",
-                                returnService.viewReturnsByCustomer(readLine("ID del cliente: "))); 
+                                returnService.viewReturnsByCustomer(readLine("ID del cliente: ")));
                         break;
-                    case 4: 
+                    case 4:
                         printReturns("DEVOLUCIONES DE LA VENTA",
-                                returnService.viewReturnsBySale(readLine("ID de la venta: "))); 
+                                returnService.viewReturnsBySale(readLine("ID de la venta: ")));
                         break;
                     case 5:
                         int month = readInt("Mes (1-12): ");
@@ -194,9 +192,9 @@ public class ConsoleUI {
                         System.out.println(String.format("Balance neto de %02d/%d: $%.2f",
                                 month, year, returnService.generateMonthlyBalance(month, year)));
                         break;
-                    case 0: 
+                    case 0:
                         break;
-                    default: 
+                    default:
                         System.out.println("Opción inválida.");
                 }
             } catch (IllegalArgumentException e) {
@@ -210,7 +208,9 @@ public class ConsoleUI {
         List<String> ids = new ArrayList<>();
         while (true) {
             String id = readLine("ID del producto a devolver (Enter para terminar): ");
-            if (id.isEmpty()) break;
+            if (id.isEmpty()) {
+                break;
+            }
             ids.add(id);
         }
         String reason = readLine("Motivo de la devolución: ");
@@ -231,7 +231,6 @@ public class ConsoleUI {
     }
 
     // --- RESTO DE FUNCIONALIDADES EXISTENTES ---
-
     private void listProductsAndAccessories() {
         System.out.println("\n--- INVENTARIO DE PRODUCTOS Y ACCESORIOS ---");
         System.out.println("Productos:");
@@ -363,7 +362,7 @@ public class ConsoleUI {
 
     private void registerSale() {
         String saleId = readLine("Ingrese ID de la Venta: ");
-        
+
         String custId = readLine("Ingrese ID del Cliente: ");
         Customer customer = personService.findCustomerById(custId);
         if (customer == null) {
@@ -382,7 +381,7 @@ public class ConsoleUI {
         String choice;
         do {
             String itemId = readLine("Ingrese ID del producto o accesorio a agregar: ");
-            
+
             Product product = productService.findById(itemId);
             if (product == null) {
                 product = accessoryService.findById(itemId);
