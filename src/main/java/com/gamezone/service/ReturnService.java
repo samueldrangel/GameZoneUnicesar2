@@ -1,5 +1,6 @@
 package com.gamezone.service;
 
+import com.gamezone.model.Accessory;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
@@ -12,18 +13,21 @@ public class ReturnService {
     private final ReturnRepository repository;
     private final SaleService saleService;
     private final ProductService productService;
+    private final AccessoryService accessoryService; // <-- Añadido
     private final List<Return> returns;
 
     /**
-     * @param repository     the return repository
-     * @param saleService    service used to find sales
-     * @param productService service used to restore stock
+     * @param repository      the return repository
+     * @param saleService     service used to find sales
+     * @param productService  service used to restore product stock
+     * @param accessoryService service used to restore accessory stock
      */
     public ReturnService(ReturnRepository repository, SaleService saleService,
-                         ProductService productService) {
+                         ProductService productService, AccessoryService accessoryService) {
         this.repository = repository;
         this.saleService = saleService;
         this.productService = productService;
+        this.accessoryService = accessoryService; // <-- Inicializado
         this.returns = new ArrayList<>(repository.loadAll(saleService.listAllSales()));
     }
 
@@ -79,9 +83,20 @@ public class ReturnService {
 
         Return r = new Return("RET-" + (returns.size() + 1), LocalDate.now(), sale,
                 toReturn, reason.trim().replace(',', ' '));
+        
+        // Restauración de stock diferenciada entre accesorios y productos generales
         for (Map.Entry<String, Integer> e : requested.entrySet()) {
-            productService.restoreStock(e.getKey(), e.getValue());
+            String productId = e.getKey();
+            int quantity = e.getValue();
+            
+            Product product = soldById.get(productId);
+            if (product instanceof Accessory) {
+                accessoryService.restoreStock(productId, quantity);
+            } else {
+                productService.restoreStock(productId, quantity);
+            }
         }
+
         returns.add(r);
         repository.saveAll(returns);
         return r;
