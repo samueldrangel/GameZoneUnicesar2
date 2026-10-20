@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  * Persistence for sales transactions.
- * Each line: id,date,customerId,sellerId,itemId1;itemId2,total,promotionName,discount
+ * Each line: id,date,customerId,sellerId,itemId1;itemId2,total,promotionName,discount,extendedWarrantyCost
  */
 public class SaleRepository {
     private static final String FILE_PATH = "data/sales.csv";
@@ -44,7 +44,8 @@ public class SaleRepository {
                             + String.join(";", ids) + ","
                             + s.getTotalAmount() + ","
                             + (s.getAppliedPromotionName() == null ? "" : s.getAppliedPromotionName()) + ","
-                            + s.getDiscountAmount());
+                            + s.getDiscountAmount() + "," 
+                            + s.getExtendedWarrantyCost());
                 }
             }
         } catch (IOException e) {
@@ -98,6 +99,9 @@ public class SaleRepository {
                     if (parts.length >= 8 && !parts[6].isEmpty()) {
                         sale.setAppliedPromotionName(parts[6]);
                         sale.setDiscountAmount(Double.parseDouble(parts[7]));
+                    }
+                    if (parts.length >= 9 && !parts[8].isEmpty()) {
+                        sale.setExtendedWarrantyCost(Double.parseDouble(parts[8]));
                     }
                     sales.add(sale);
                 } catch (RuntimeException e) {
