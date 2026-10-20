@@ -3,6 +3,7 @@ package com.gamezone.ui;
 import com.gamezone.model.*;
 import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.persistence.PromotionRepository;
+import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.service.*;
 
@@ -13,7 +14,7 @@ import java.util.Scanner;
 
 /**
  * Interfaz de menú interactivo por consola completa con gestión de productos, 
- * accesorios, personas, ventas y promociones.
+ * accesorios, personas, ventas, promociones y devoluciones.
  * 
  * @author Samuel Angulo
  */
@@ -23,6 +24,7 @@ public class ConsoleUI {
     private PersonService personService;
     private PromotionService promotionService;
     private SaleService saleService;
+    private ReturnService returnService; // Servicio de devoluciones integrado
     private Scanner scanner;
 
     public ConsoleUI() {
@@ -31,6 +33,11 @@ public class ConsoleUI {
         this.personService = new PersonService();
         this.promotionService = new PromotionService(new PromotionRepository());
         this.saleService = new SaleService(new SaleRepository(), productService, accessoryService, personService, promotionService);
+        
+        // Inicialización correcta de ReturnService con sus 3 dependencias requeridas
+        ReturnRepository returnRepository = new ReturnRepository();
+        this.returnService = new ReturnService(returnRepository, saleService, productService);
+        
         this.scanner = new Scanner(System.in);
     }
 
@@ -55,11 +62,11 @@ public class ConsoleUI {
             System.out.println("13. Registrar descuento por porcentaje");
             System.out.println("14. Registrar descuento por categoría");
             System.out.println("15. Registrar descuento por compra al por mayor");
+            System.out.println("16. Gestión de devoluciones");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opción: ");
             
-            option = scanner.nextInt();
-            scanner.nextLine(); // Consumir salto de línea
+            option = readInt("");
 
             switch (option) {
                 case 1:
@@ -107,6 +114,9 @@ public class ConsoleUI {
                 case 15:
                     registerBulkPurchaseDiscount();
                     break;
+                case 16:
+                    showReturnMenu();
+                    break;
                 case 0:
                     System.out.println("Saliendo de la aplicación. ¡Hasta luego!");
                     break;
@@ -115,6 +125,112 @@ public class ConsoleUI {
             }
         } while (option != 0);
     }
+
+    // --- MÉTODOS AUXILIARES DE ENTRADA ---
+
+    private int readInt(String prompt) {
+        while (true) {
+            if (!prompt.isEmpty()) {
+                System.out.print(prompt);
+            }
+            try {
+                int val = Integer.parseInt(scanner.nextLine());
+                return val;
+            } catch (NumberFormatException e) {
+                System.out.println("Por favor, ingrese un número entero válido.");
+            }
+        }
+    }
+
+    private double readDouble(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                double val = Double.parseDouble(scanner.nextLine());
+                return val;
+            } catch (NumberFormatException e) {
+                System.out.println("Por favor, ingrese un número decimal válido.");
+            }
+        }
+    }
+
+    private String readLine(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextLine();
+    }
+
+    // --- MÓDULO DE DEVOLUCIONES ---
+
+    private void showReturnMenu() {
+        int option;
+        do {
+            System.out.println("\n--- GESTIÓN DE DEVOLUCIONES ---");
+            System.out.println("1. Registrar una nueva devolución");
+            System.out.println("2. Consultar todas las devoluciones");
+            System.out.println("3. Consultar devoluciones por cliente");
+            System.out.println("4. Consultar devoluciones por venta");
+            System.out.println("5. Consultar balance mensual");
+            System.out.println("0. Volver");
+            option = readInt("Seleccione una opción: ");
+            try {
+                switch (option) {
+                    case 1: 
+                        registerReturn(); 
+                        break;
+                    case 2: 
+                        printReturns("TODAS LAS DEVOLUCIONES", returnService.viewAllReturns()); 
+                        break;
+                    case 3: 
+                        printReturns("DEVOLUCIONES DEL CLIENTE",
+                                returnService.viewReturnsByCustomer(readLine("ID del cliente: "))); 
+                        break;
+                    case 4: 
+                        printReturns("DEVOLUCIONES DE LA VENTA",
+                                returnService.viewReturnsBySale(readLine("ID de la venta: "))); 
+                        break;
+                    case 5:
+                        int month = readInt("Mes (1-12): ");
+                        int year = readInt("Año: ");
+                        System.out.println(String.format("Balance neto de %02d/%d: $%.2f",
+                                month, year, returnService.generateMonthlyBalance(month, year)));
+                        break;
+                    case 0: 
+                        break;
+                    default: 
+                        System.out.println("Opción inválida.");
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println("No se pudo completar la operación: " + e.getMessage());
+            }
+        } while (option != 0);
+    }
+
+    private void registerReturn() {
+        String saleId = readLine("ID de la venta: ");
+        List<String> ids = new ArrayList<>();
+        while (true) {
+            String id = readLine("ID del producto a devolver (Enter para terminar): ");
+            if (id.isEmpty()) break;
+            ids.add(id);
+        }
+        String reason = readLine("Motivo de la devolución: ");
+        Return r = returnService.registerReturn(saleId, ids, reason);
+        System.out.println("¡Devolución registrada exitosamente!");
+        System.out.println(r.generateReturnReceipt());
+    }
+
+    private void printReturns(String title, List<Return> list) {
+        System.out.println("\n--- " + title + " ---");
+        if (list.isEmpty()) {
+            System.out.println("No hay devoluciones para mostrar.");
+        } else {
+            for (Return r : list) {
+                System.out.println(r.generateReturnReceipt() + "\n");
+            }
+        }
+    }
+
+    // --- RESTO DE FUNCIONALIDADES EXISTENTES ---
 
     private void listProductsAndAccessories() {
         System.out.println("\n--- INVENTARIO DE PRODUCTOS Y ACCESORIOS ---");
@@ -129,14 +245,13 @@ public class ConsoleUI {
     }
 
     private void addVideoGame() {
-        System.out.print("Ingrese ID: "); String id = scanner.nextLine();
-        System.out.print("Ingrese Título: "); String title = scanner.nextLine();
-        System.out.print("Ingrese Precio: "); double price = scanner.nextDouble();
-        System.out.print("Ingrese Stock: "); int stock = scanner.nextInt();
-        scanner.nextLine();
-        System.out.print("Ingrese Plataforma: "); String platform = scanner.nextLine();
-        System.out.print("Ingrese Género: "); String genre = scanner.nextLine();
-        System.out.print("Ingrese Clasificación por edad: "); String rating = scanner.nextLine();
+        String id = readLine("Ingrese ID: ");
+        String title = readLine("Ingrese Título: ");
+        double price = readDouble("Ingrese Precio: ");
+        int stock = readInt("Ingrese Stock: ");
+        String platform = readLine("Ingrese Plataforma: ");
+        String genre = readLine("Ingrese Género: ");
+        String rating = readLine("Ingrese Clasificación por edad: ");
 
         VideoGame vg = new VideoGame(id, title, price, stock, platform, genre, rating);
         productService.addProduct(vg);
@@ -144,14 +259,13 @@ public class ConsoleUI {
     }
 
     private void addConsole() {
-        System.out.print("Ingrese ID: "); String id = scanner.nextLine();
-        System.out.print("Ingrese Título: "); String title = scanner.nextLine();
-        System.out.print("Ingrese Precio: "); double price = scanner.nextDouble();
-        System.out.print("Ingrese Stock: "); int stock = scanner.nextInt();
-        scanner.nextLine();
-        System.out.print("Ingrese Marca: "); String brand = scanner.nextLine();
-        System.out.print("Ingrese Modelo: "); String model = scanner.nextLine();
-        System.out.print("Ingrese Generación: "); String generation = scanner.nextLine();
+        String id = readLine("Ingrese ID: ");
+        String title = readLine("Ingrese Título: ");
+        double price = readDouble("Ingrese Precio: ");
+        int stock = readInt("Ingrese Stock: ");
+        String brand = readLine("Ingrese Marca: ");
+        String model = readLine("Ingrese Modelo: ");
+        String generation = readLine("Ingrese Generación: ");
 
         com.gamezone.model.Console c = new com.gamezone.model.Console(id, title, price, stock, brand, model, generation);
         productService.addProduct(c);
@@ -159,12 +273,11 @@ public class ConsoleUI {
     }
 
     private void registerController() {
-        System.out.print("Ingrese ID: "); String id = scanner.nextLine();
-        System.out.print("Ingrese Título: "); String title = scanner.nextLine();
-        System.out.print("Ingrese Precio: "); double price = scanner.nextDouble();
-        System.out.print("Ingrese Stock: "); int stock = scanner.nextInt();
-        scanner.nextLine();
-        System.out.print("Ingrese Tipo de Conexión (Wireless/Wired): "); String connType = scanner.nextLine();
+        String id = readLine("Ingrese ID: ");
+        String title = readLine("Ingrese Título: ");
+        double price = readDouble("Ingrese Precio: ");
+        int stock = readInt("Ingrese Stock: ");
+        String connType = readLine("Ingrese Tipo de Conexión (Wireless/Wired): ");
 
         List<String> compatibleConsoles = promptCompatibleConsoles();
 
@@ -173,14 +286,12 @@ public class ConsoleUI {
     }
 
     private void registerCable() {
-        System.out.print("Ingrese ID: "); String id = scanner.nextLine();
-        System.out.print("Ingrese Título: "); String title = scanner.nextLine();
-        System.out.print("Ingrese Precio: "); double price = scanner.nextDouble();
-        System.out.print("Ingrese Stock: "); int stock = scanner.nextInt();
-        scanner.nextLine();
-        System.out.print("Ingrese Longitud (Metros): "); double length = scanner.nextDouble();
-        scanner.nextLine();
-        System.out.print("Ingrese Tipo de Conector: "); String connector = scanner.nextLine();
+        String id = readLine("Ingrese ID: ");
+        String title = readLine("Ingrese Título: ");
+        double price = readDouble("Ingrese Precio: ");
+        int stock = readInt("Ingrese Stock: ");
+        double length = readDouble("Ingrese Longitud (Metros): ");
+        String connector = readLine("Ingrese Tipo de Conector: ");
 
         List<String> compatibleConsoles = promptCompatibleConsoles();
 
@@ -189,13 +300,12 @@ public class ConsoleUI {
     }
 
     private void registerMemory() {
-        System.out.print("Ingrese ID: "); String id = scanner.nextLine();
-        System.out.print("Ingrese Título: "); String title = scanner.nextLine();
-        System.out.print("Ingrese Precio: "); double price = scanner.nextDouble();
-        System.out.print("Ingrese Stock: "); int stock = scanner.nextInt();
-        System.out.print("Ingrese Capacidad (GB): "); int capacity = scanner.nextInt();
-        scanner.nextLine();
-        System.out.print("Ingrese Tipo de Memoria: "); String memoryType = scanner.nextLine();
+        String id = readLine("Ingrese ID: ");
+        String title = readLine("Ingrese Título: ");
+        double price = readDouble("Ingrese Precio: ");
+        int stock = readInt("Ingrese Stock: ");
+        int capacity = readInt("Ingrese Capacidad (GB): ");
+        String memoryType = readLine("Ingrese Tipo de Memoria: ");
 
         List<String> compatibleConsoles = promptCompatibleConsoles();
 
@@ -205,13 +315,10 @@ public class ConsoleUI {
 
     private List<String> promptCompatibleConsoles() {
         List<String> compatibleConsoles = new ArrayList<>();
-        System.out.print("¿Agregar ID de consola compatible? (s/n): ");
-        String opt = scanner.nextLine();
+        String opt = readLine("¿Agregar ID de consola compatible? (s/n): ");
         while (opt.equalsIgnoreCase("s") || opt.equalsIgnoreCase("y")) {
-            System.out.print("Ingrese ID de la consola: ");
-            compatibleConsoles.add(scanner.nextLine());
-            System.out.print("¿Agregar otra consola compatible? (s/n): ");
-            opt = scanner.nextLine();
+            compatibleConsoles.add(readLine("Ingrese ID de la consola: "));
+            opt = readLine("¿Agregar otra consola compatible? (s/n): ");
         }
         return compatibleConsoles;
     }
@@ -224,10 +331,10 @@ public class ConsoleUI {
     }
 
     private void addCustomer() {
-        System.out.print("Ingrese ID: "); String id = scanner.nextLine();
-        System.out.print("Ingrese Nombre: "); String name = scanner.nextLine();
-        System.out.print("Ingrese Teléfono: "); String phone = scanner.nextLine();
-        System.out.print("Ingrese Correo Electrónico: "); String email = scanner.nextLine();
+        String id = readLine("Ingrese ID: ");
+        String name = readLine("Ingrese Nombre: ");
+        String phone = readLine("Ingrese Teléfono: ");
+        String email = readLine("Ingrese Correo Electrónico: ");
 
         Customer customer = new Customer(id, name, phone, email);
         personService.addPerson(customer);
@@ -235,11 +342,11 @@ public class ConsoleUI {
     }
 
     private void addSeller() {
-        System.out.print("Ingrese ID: "); String id = scanner.nextLine();
-        System.out.print("Ingrese Nombre: "); String name = scanner.nextLine();
-        System.out.print("Ingrese Teléfono: "); String phone = scanner.nextLine();
-        System.out.print("Ingrese Código de Empleado: "); String code = scanner.nextLine();
-        System.out.print("Ingrese Turno de Trabajo: "); String shift = scanner.nextLine();
+        String id = readLine("Ingrese ID: ");
+        String name = readLine("Ingrese Nombre: ");
+        String phone = readLine("Ingrese Teléfono: ");
+        String code = readLine("Ingrese Código de Empleado: ");
+        String shift = readLine("Ingrese Turno de Trabajo: ");
 
         Seller seller = new Seller(id, name, phone, code, shift);
         personService.addPerson(seller);
@@ -255,16 +362,16 @@ public class ConsoleUI {
     }
 
     private void registerSale() {
-        System.out.print("Ingrese ID de la Venta: "); String saleId = scanner.nextLine();
+        String saleId = readLine("Ingrese ID de la Venta: ");
         
-        System.out.print("Ingrese ID del Cliente: "); String custId = scanner.nextLine();
+        String custId = readLine("Ingrese ID del Cliente: ");
         Customer customer = personService.findCustomerById(custId);
         if (customer == null) {
             System.out.println("¡Cliente no encontrado!");
             return;
         }
 
-        System.out.print("Ingrese ID del Vendedor: "); String sellId = scanner.nextLine();
+        String sellId = readLine("Ingrese ID del Vendedor: ");
         Seller seller = personService.findSellerById(sellId);
         if (seller == null) {
             System.out.println("¡Vendedor no encontrado!");
@@ -274,8 +381,7 @@ public class ConsoleUI {
         List<Product> purchasedItems = new ArrayList<>();
         String choice;
         do {
-            System.out.print("Ingrese ID del producto o accesorio a agregar: "); 
-            String itemId = scanner.nextLine();
+            String itemId = readLine("Ingrese ID del producto o accesorio a agregar: ");
             
             Product product = productService.findById(itemId);
             if (product == null) {
@@ -289,8 +395,7 @@ public class ConsoleUI {
                 System.out.println("¡Producto o accesorio no encontrado!");
             }
 
-            System.out.print("¿Agregar otro ítem a esta venta? (s/n): ");
-            choice = scanner.nextLine();
+            choice = readLine("¿Agregar otro ítem a esta venta? (s/n): ");
         } while (choice.equalsIgnoreCase("s") || choice.equalsIgnoreCase("y"));
 
         if (purchasedItems.isEmpty()) {
@@ -320,12 +425,11 @@ public class ConsoleUI {
 
     private void registerPercentageDiscount() {
         try {
-            System.out.print("Ingrese ID de la promoción: "); String id = scanner.nextLine();
-            System.out.print("Ingrese Nombre de la promoción: "); String name = scanner.nextLine();
-            System.out.print("Ingrese Fecha de inicio (YYYY-MM-DD): "); LocalDate start = LocalDate.parse(scanner.nextLine());
-            System.out.print("Ingrese Fecha de fin (YYYY-MM-DD): "); LocalDate end = LocalDate.parse(scanner.nextLine());
-            System.out.print("Ingrese Porcentaje de descuento (ej. 15.0): "); double percentage = scanner.nextDouble();
-            scanner.nextLine();
+            String id = readLine("Ingrese ID de la promoción: ");
+            String name = readLine("Ingrese Nombre de la promoción: ");
+            LocalDate start = LocalDate.parse(readLine("Ingrese Fecha de inicio (YYYY-MM-DD): "));
+            LocalDate end = LocalDate.parse(readLine("Ingrese Fecha de fin (YYYY-MM-DD): "));
+            double percentage = readDouble("Ingrese Porcentaje de descuento (ej. 15.0): ");
 
             boolean success = promotionService.registerPercentageDiscount(id, name, start, end, percentage);
             if (success) {
@@ -340,13 +444,12 @@ public class ConsoleUI {
 
     private void registerCategoryDiscount() {
         try {
-            System.out.print("Ingrese ID de la promoción: "); String id = scanner.nextLine();
-            System.out.print("Ingrese Nombre de la promoción: "); String name = scanner.nextLine();
-            System.out.print("Ingrese Fecha de inicio (YYYY-MM-DD): "); LocalDate start = LocalDate.parse(scanner.nextLine());
-            System.out.print("Ingrese Fecha de fin (YYYY-MM-DD): "); LocalDate end = LocalDate.parse(scanner.nextLine());
-            System.out.print("Ingrese Porcentaje de descuento: "); double percentage = scanner.nextDouble();
-            scanner.nextLine();
-            System.out.print("Ingrese Categoría (VIDEOGAME o CONSOLE): "); String category = scanner.nextLine();
+            String id = readLine("Ingrese ID de la promoción: ");
+            String name = readLine("Ingrese Nombre de la promoción: ");
+            LocalDate start = LocalDate.parse(readLine("Ingrese Fecha de inicio (YYYY-MM-DD): "));
+            LocalDate end = LocalDate.parse(readLine("Ingrese Fecha de fin (YYYY-MM-DD): "));
+            double percentage = readDouble("Ingrese Porcentaje de descuento: ");
+            String category = readLine("Ingrese Categoría (VIDEOGAME o CONSOLE): ");
 
             boolean success = promotionService.registerCategoryDiscount(id, name, start, end, percentage, category);
             if (success) {
@@ -361,13 +464,12 @@ public class ConsoleUI {
 
     private void registerBulkPurchaseDiscount() {
         try {
-            System.out.print("Ingrese ID de la promoción: "); String id = scanner.nextLine();
-            System.out.print("Ingrese Nombre de la promoción: "); String name = scanner.nextLine();
-            System.out.print("Ingrese Fecha de inicio (YYYY-MM-DD): "); LocalDate start = LocalDate.parse(scanner.nextLine());
-            System.out.print("Ingrese Fecha de fin (YYYY-MM-DD): "); LocalDate end = LocalDate.parse(scanner.nextLine());
-            System.out.print("Ingrese Cantidad mínima de ítems: "); int minQty = scanner.nextInt();
-            System.out.print("Ingrese Porcentaje de descuento: "); double percentage = scanner.nextDouble();
-            scanner.nextLine();
+            String id = readLine("Ingrese ID de la promoción: ");
+            String name = readLine("Ingrese Nombre de la promoción: ");
+            LocalDate start = LocalDate.parse(readLine("Ingrese Fecha de inicio (YYYY-MM-DD): "));
+            LocalDate end = LocalDate.parse(readLine("Ingrese Fecha de fin (YYYY-MM-DD): "));
+            int minQty = readInt("Ingrese Cantidad mínima de ítems: ");
+            double percentage = readDouble("Ingrese Porcentaje de descuento: ");
 
             boolean success = promotionService.registerBulkPurchaseDiscount(id, name, start, end, minQty, percentage);
             if (success) {

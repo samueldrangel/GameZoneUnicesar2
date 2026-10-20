@@ -146,3 +146,39 @@ In both classes, with different responsibilities.
 Putting the range check only in the service would force it to read the dates of
 each promotion; putting the filtering only in the model would make `Promotion`
 aware of the whole catalog.
+
+# Return Module Analysis
+
+## 1. Relationship between Return and Sale
+It is an association. A `Return` holds a reference to the `Sale` it refers to
+(multiplicity 1), and a sale can have zero or more returns. It is not inheritance,
+because a return is not a kind of sale. It is not aggregation or composition,
+because the sale exists independently and is not owned by the return: the
+return only points to it, and `Sale` does not know its returns.
+
+## 2. Partial returns
+`Return` stores a `List<Product>` with only the products being returned, taken
+from the items of the original sale. Each occurrence in the list represents one
+returned unit. The refund is calculated from that list, not from the whole sale.
+The service also checks that the units requested do not exceed the units sold
+minus the units already returned in previous returns of the same sale.
+
+## 3. The 30-day rule
+It is a business rule, so it is validated in the service layer
+(`ReturnService.registerReturn`). The date comparison is exposed by the model
+helper `Sale.canBeReturned()`, which uses `java.time` (`LocalDate.plusDays` or
+`ChronoUnit.DAYS.between`). The service decides to reject the operation, and the
+ui only shows the message.
+
+## 4. Stock restoration
+`ProductService.restoreStock(productId, quantity)` is added and reuses the existing
+`updateStock` method with a positive delta, so the rule "stock cannot be negative"
+and the file saving stay in one place. `ReturnService` calls it for every
+returned product. Reusing existing logic avoids two implementations that can
+diverge and keeps one point of change.
+
+## 5. Monthly balance
+`ReturnService.generateMonthlyBalance(month, year)` consolidates sales and
+returns, so it belongs to the service layer: it coordinates two modules without
+adding that knowledge to the model or the ui. It needs `SaleService` (to read the
+sales of the month) and its own list of returns loaded through `ReturnRepository`.
