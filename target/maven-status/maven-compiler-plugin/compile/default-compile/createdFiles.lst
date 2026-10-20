@@ -1,6 +1,7 @@
 com\gamezone\model\Person.class
 com\gamezone\model\Product.class
 com\gamezone\model\Memory.class
+com\gamezone\model\Return.class
 com\gamezone\service\ProductService.class
 com\gamezone\persistence\PromotionRepository.class
 com\gamezone\persistence\SaleRepository.class
@@ -16,6 +17,8 @@ com\gamezone\model\Customer.class
 com\gamezone\model\Seller.class
 com\gamezone\persistence\PersonRepository.class
 com\gamezone\persistence\ProductRepository.class
+com\gamezone\persistence\ReturnRepository.class
+com\gamezone\service\ReturnService.class
 com\gamezone\model\Accessory.class
 com\gamezone\model\Controller.class
 com\gamezone\model\Console.class
