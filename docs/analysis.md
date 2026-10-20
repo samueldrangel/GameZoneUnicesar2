@@ -182,3 +182,45 @@ diverge and keeps one point of change.
 returns, so it belongs to the service layer: it coordinates two modules without
 adding that knowledge to the model or the ui. It needs `SaleService` (to read the
 sales of the month) and its own list of returns loaded through `ReturnRepository`.
+
+# Warranty Module Analysis
+
+## 1. Hierarchy and mechanism
+Both warranties share product, sale, start and end dates, but differ in duration,
+type name and cost. The shared part lives in the abstract class `Warranty`; the
+differences are abstract methods (`getDurationInMonths`, `getWarrantyType`,
+`getAdditionalCost`) implemented by `BasicWarranty` and `ExtendedWarranty`.
+Polymorphism through overriding lets each type provide its own duration without
+duplicating the end-date logic, which is written once in the base constructor.
+
+## 2. Automatic basic warranty for consoles only
+The decision is a business rule, so it is placed in the service layer
+(`SaleService.registerSale`). The real type of a product is checked with
+`instanceof Console`. Video games do not match, so they get no warranty.
+A possible improvement is a polymorphic method in `Product`
+(for example `hasDefaultWarranty()`), which would remove the type check.
+
+## 3. End date calculation
+`Warranty` computes `endDate = startDate.plusMonths(getDurationInMonths())` in its
+constructor. Subclasses only return their duration (6 or 12). Doing it in the
+constructor guarantees that an object is never created with an inconsistent end
+date, and the attributes can be final. Calling an overridable method from a
+constructor is risky when it depends on subclass fields; here the
+implementations return constants, so it is safe.
+
+## 4. Extended warranty cost
+The cost is calculated in `SaleService.registerSale`, after validating stock and
+creating the sale, when each extended warranty is assigned:
+`ExtendedWarranty.getAdditionalCost()` returns 10% of the product price and the
+service adds it to `Sale.extendedWarrantyCost`. `registerSale` receives an extra
+parameter, `List<String> productIdsWithExtendedWarranty`. The old four-argument
+signature stays as an overload that passes an empty list, so existing calls keep
+working. The sale total is `subtotal - discount + extendedWarrantyCost`.
+
+## 5. Expiring-soon query
+`WarrantyService.listWarrantiesExpiringSoon(int daysAhead)` iterates over the
+stored warranties and keeps the active ones whose end date is not after
+`today + daysAhead`. It only needs its own warranty list and `WarrantyRepository`
+for persistence. It belongs to the service layer because it is a business query
+over a collection of entities; the ui only calls it and prints the result, and
+the model does not know the catalog.
