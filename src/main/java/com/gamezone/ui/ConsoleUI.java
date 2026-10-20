@@ -429,8 +429,7 @@ public class ConsoleUI {
             return;
         }
 
-        List<Product> purchasedItems = new ArrayList<>();
-        List<String> warrantiesWithExtended = new ArrayList<>();
+        List<Product> items = new ArrayList<>();
         String choice;
         do {
             String itemId = readLine("Ingrese ID del producto o accesorio a agregar: ");
@@ -441,16 +440,8 @@ public class ConsoleUI {
             }
 
             if (product != null) {
-                purchasedItems.add(product);
+                items.add(product);
                 System.out.println("Ítem agregado al carrito de venta.");
-                
-                // Si es una consola, preguntar si desea garantía extendida
-                if (product instanceof com.gamezone.model.Console) {
-                    String extOpt = readLine("¿Desea agregar garantía extendida para esta consola? (s/n): ");
-                    if (extOpt.equalsIgnoreCase("s") || extOpt.equalsIgnoreCase("y")) {
-                        warrantiesWithExtended.add(product.getId());
-                    }
-                }
             } else {
                 System.out.println("¡Producto o accesorio no encontrado!");
             }
@@ -458,12 +449,23 @@ public class ConsoleUI {
             choice = readLine("¿Agregar otro ítem a esta venta? (s/n): ");
         } while (choice.equalsIgnoreCase("s") || choice.equalsIgnoreCase("y"));
 
-        if (purchasedItems.isEmpty()) {
+        if (items.isEmpty()) {
             System.out.println("Venta cancelada. No se agregaron ítems.");
             return;
         }
 
-        boolean success = saleService.registerSale(saleId, customer, seller, purchasedItems, warrantiesWithExtended);
+        // Selección de garantías extendidas para las consolas compradas
+        List<String> extendedIds = new ArrayList<>();
+        for (Product item : items) {
+            if (item instanceof com.gamezone.model.Console && !extendedIds.contains(item.getId())) {
+                if (readLine("¿Agregar garantía extendida a " + item.getTitle() + "? (s/n): ")
+                        .equalsIgnoreCase("s")) {
+                    extendedIds.add(item.getId());
+                }
+            }
+        }
+
+        boolean success = saleService.registerSale(saleId, customer, seller, items, extendedIds);
         if (success) {
             System.out.println("¡Venta registrada exitosamente!");
         } else {
