@@ -31,42 +31,27 @@ public class ConsoleUI {
     private Scanner scanner;
 
     public ConsoleUI() {
-        private ProductService productService;
-    private AccessoryService accessoryService;
-    private PersonService personService;
-    private PromotionService promotionService;
-    private WarrantyService warrantyService; // Servicio de garantías integrado
-    private SaleService saleService;
-    private ReturnService returnService; // Servicio de devoluciones integrado
-    private Scanner scanner;
-
-    public ConsoleUI() {
         this.productService = new ProductService();
         this.accessoryService = new AccessoryService(new AccessoryRepository());
         this.personService = new PersonService();
         this.promotionService = new PromotionService(new PromotionRepository());
-        
+
         // Inicialización del servicio de garantías con su repositorio
         this.warrantyService = new WarrantyService(new WarrantyRepository());
-        
-        this.saleService = new SaleService(
-            new SaleRepository(), 
-            productService, 
-            accessoryService, 
-            personService, 
-            promotionService, 
-            warrantyService
-        );
 
-        // Inicialización completa y correcta de ReturnService con las 5 dependencias
+        this.saleService = new SaleService(new SaleRepository(), productService, accessoryService, personService, promotionService, warrantyService);
+
+        // Inicialización correcta de ReturnService con sus dependencias
+        ReturnRepository returnRepository = new ReturnRepository();
+
         this.returnService = new ReturnService(
-            new ReturnRepository(), 
-            saleService, 
-            productService, 
-            accessoryService, 
-            warrantyService
+                returnRepository,
+                saleService,
+                productService,
+                accessoryService,
+                warrantyService,
+                returnRepository.loadAll(saleService.listAllSales())
         );
-        
         this.scanner = new Scanner(System.in);
     }
 
@@ -284,12 +269,20 @@ public class ConsoleUI {
                         System.out.println(w == null ? "No existe garantía para ese producto en esa venta."
                                 : w.generateWarrantyCertificate());
                         break;
-                    case 2: printWarranties("TODAS LAS GARANTÍAS", warrantyService.listAllWarranties()); break;
-                    case 3: printWarranties("GARANTÍAS VIGENTES", warrantyService.listActiveWarranties()); break;
-                    case 4: printWarranties("GARANTÍAS PRÓXIMAS A VENCER",
-                            warrantyService.listWarrantiesExpiringSoon(readInt("Días de anticipación: "))); break;
-                    case 0: break;
-                    default: System.out.println("Opción inválida.");
+                    case 2:
+                        printWarranties("TODAS LAS GARANTÍAS", warrantyService.listAllWarranties());
+                        break;
+                    case 3:
+                        printWarranties("GARANTÍAS VIGENTES", warrantyService.listActiveWarranties());
+                        break;
+                    case 4:
+                        printWarranties("GARANTÍAS PRÓXIMAS A VENCER",
+                                warrantyService.listWarrantiesExpiringSoon(readInt("Días de anticipación: ")));
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        System.out.println("Opción inválida.");
                 }
             } catch (IllegalArgumentException e) {
                 System.out.println("No se pudo completar la operación: " + e.getMessage());
@@ -299,7 +292,9 @@ public class ConsoleUI {
 
     private void printWarranties(String title, List<Warranty> list) {
         System.out.println("\n--- " + title + " ---");
-        if (list.isEmpty()) System.out.println("No hay garantías para mostrar.");
+        if (list.isEmpty()) {
+            System.out.println("No hay garantías para mostrar.");
+        }
         for (Warranty w : list) {
             System.out.println("- " + w.getId() + " | " + w.getWarrantyType() + " | "
                     + w.getProduct().getTitle() + " | Venta " + w.getSale().getSaleId()
@@ -468,10 +463,16 @@ public class ConsoleUI {
     private void registerSale() {
         String saleId = readLine("ID de la venta: ");
         Customer customer = personService.findCustomerById(readLine("ID del cliente: "));
-        if (customer == null) { System.out.println("Cliente no encontrado. Venta cancelada."); return; }
+        if (customer == null) {
+            System.out.println("Cliente no encontrado. Venta cancelada.");
+            return;
+        }
         listSellers();
         Seller seller = personService.findSellerById(readLine("ID del vendedor: "));
-        if (seller == null) { System.out.println("Vendedor no encontrado. Venta cancelada."); return; }
+        if (seller == null) {
+            System.out.println("Vendedor no encontrado. Venta cancelada.");
+            return;
+        }
 
         List<Product> items = new ArrayList<>();
         boolean addMore = true;
@@ -486,11 +487,18 @@ public class ConsoleUI {
                 listProducts();
                 item = productService.findById(readLine("ID del producto: "));
             }
-            if (item == null) System.out.println("Ítem no encontrado.");
-            else { items.add(item); System.out.println("Ítem agregado: " + item.getTitle()); }
+            if (item == null) {
+                System.out.println("Ítem no encontrado.");
+            } else {
+                items.add(item);
+                System.out.println("Ítem agregado: " + item.getTitle());
+            }
             addMore = readLine("¿Agregar otro ítem? (s/n): ").equalsIgnoreCase("s");
         }
-        if (items.isEmpty()) { System.out.println("La venta debe tener al menos un ítem."); return; }
+        if (items.isEmpty()) {
+            System.out.println("La venta debe tener al menos un ítem.");
+            return;
+        }
 
         List<String> extendedIds = new ArrayList<>();
         for (Product item : items) {

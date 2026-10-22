@@ -29,7 +29,12 @@ public class ReturnService {
      */
 
     // Constructor completo actualizado
-    public ReturnService(ReturnRepository repository, SaleService saleService, ProductService productService, AccessoryService accessoryService, WarrantyService warrantyService, java.util.List<com.gamezone.model.Return> returns) {
+    public ReturnService(ReturnRepository repository, 
+                         SaleService saleService, 
+                         ProductService productService, 
+                         AccessoryService accessoryService, 
+                         WarrantyService warrantyService, 
+                         List<Return> returns) {
         this.repository = repository;
         this.saleService = saleService;
         this.productService = productService;
