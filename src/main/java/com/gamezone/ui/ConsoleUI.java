@@ -511,7 +511,7 @@ public class ConsoleUI {
             LocalDate start = LocalDate.parse(readLine("Ingrese Fecha de inicio (YYYY-MM-DD): "));
             LocalDate end = LocalDate.parse(readLine("Ingrese Fecha de fin (YYYY-MM-DD): "));
             double percentage = readDouble("Ingrese Porcentaje de descuento: ");
-            String category = readLine("Ingrese Categoría (VIDEOGAME o CONSOLE): ");
+            String category = readLine("Categoría (VIDEOGAME / CONSOLE / ACCESSORY): ").toUpperCase();
 
             boolean success = promotionService.registerCategoryDiscount(id, name, start, end, percentage, category);
             if (success) {
