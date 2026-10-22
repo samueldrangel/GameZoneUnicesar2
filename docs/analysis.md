@@ -239,3 +239,43 @@ the model does not know the catalog.
 
 ## Known limitation (out of scope)
 Returning one of two identical consoles in the same sale cancels the warranties of both.
+
+# Exception Handling Analysis
+
+## 1. Checked or unchecked root?
+`GameZoneException` extends `RuntimeException` (unchecked). The failures it models
+(missing resource, broken rule, invalid data, file problem) are not conditions the
+immediate caller can recover from, so forcing `throws` clauses would add noise to
+every service and repository signature. With an unchecked root the signatures do
+not change, the exceptions travel up to the ui, and the menu handles them in one
+place. The trade-off is that the compiler no longer forces callers to handle
+them, so the ui must catch them.
+
+## 2. Why a hierarchy instead of IllegalArgumentException
+A common root plus four specialized classes lets the code distinguish the kind of
+problem by type. It applies Single Responsibility (each class is one category),
+the Open/Closed Principle (a new category extends the root without touching
+existing handlers) and Liskov Substitution (any subclass can be caught as
+`GameZoneException`). It also allows a generic handler as a safety net and an
+error code for support.
+
+## 3. Where validators are called
+Services call validators first, before the business operation. They sit between
+service and model: they receive objects and values already retrieved by the
+service and throw exceptions. They do not access persistence; otherwise they
+would depend on a lower layer, mix data access with rules and be hard to test.
+
+## 4. Preserving behavior
+Before the refactor the team runs a fixed script of all menu operations with fixed
+inputs and records the output (reference). After each pull request the affected
+operations are repeated, and at the end all of them. Valid inputs must produce
+the same results and the same data files; only error messages change. Evidence:
+a before/after table, `mvn clean compile` and identical data file contents.
+
+## 5. Catch strategy in ConsoleMenu
+One `try` with several `catch` blocks ordered from specific to general:
+`ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`,
+`PersistenceException` and finally `GameZoneException` as a safety net. A single
+generic catch would give one message for everything, and separate try blocks
+would repeat code. Placing the handler in one helper method keeps each menu
+option clean and the messages differentiated.
