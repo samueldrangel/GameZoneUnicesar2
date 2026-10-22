@@ -39,14 +39,23 @@ public class Return {
     public String getReason() { return reason; }
     public double getRefundAmount() { return refundAmount; }
 
+    private double discountRatio() {
+        double subtotal = sale.getSubtotal();
+        return subtotal > 0 ? sale.getDiscountAmount() / subtotal : 0;
+    }
+
+    private double itemRefund(Product p) {
+        return p.getPrice() * (1 - discountRatio());
+    }
+
     /**
-     * Sums the prices of the returned products and stores the result.
+     * Sums the proportional prices of the returned products and stores the result.
      *
      * @return the refund amount
      */
     public double calculateRefundAmount() {
         double total = 0;
-        for (Product p : returnedProducts) total += p.getPrice();
+        for (Product p : returnedProducts) total += itemRefund(p);
         refundAmount = total;
         return refundAmount;
     }
@@ -60,7 +69,8 @@ public class Return {
         sb.append("Venta original: ").append(sale.getSaleId()).append("\n");
         sb.append("Productos devueltos:\n");
         for (Product p : returnedProducts) {
-            sb.append(String.format("  - %s ($%.2f)%n", p.getTitle(), p.getPrice()));
+            sb.append(String.format("  - %s (Precio: $%.2f | Reembolso prop.: $%.2f)%n", 
+                    p.getTitle(), p.getPrice(), itemRefund(p)));
         }
         sb.append("Motivo: ").append(reason).append("\n");
         sb.append(String.format("Monto reembolsado: $%.2f", refundAmount));
