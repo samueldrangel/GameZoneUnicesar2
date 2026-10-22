@@ -69,8 +69,8 @@ public class Return {
         sb.append("Venta original: ").append(sale.getSaleId()).append("\n");
         sb.append("Productos devueltos:\n");
         for (Product p : returnedProducts) {
-            sb.append(String.format("  - %s (Precio: $%.2f | Reembolso prop.: $%.2f)%n", 
-                    p.getTitle(), p.getPrice(), itemRefund(p)));
+            sb.append(String.format("  - %s | Precio de lista: $%.2f | Descuento proporcional: -$%.2f | Reembolso: $%.2f%n",
+                    p.getTitle(), p.getPrice(), p.getPrice() - itemRefund(p), itemRefund(p)));
         }
         sb.append("Motivo: ").append(reason).append("\n");
         sb.append(String.format("Monto reembolsado: $%.2f", refundAmount));
