@@ -62,29 +62,32 @@ public class AccessoryService {
         return accessories.stream().filter(a -> a.getId().equalsIgnoreCase(id)).findFirst().orElse(null);
     }
 
-    public void updateStock(String accessoryId, int quantity) {
+    public boolean updateStock(String accessoryId, int quantity) {
         Accessory accessory = findById(accessoryId);
         if (accessory != null) {
             accessory.setStock(accessory.getStock() - quantity);
             repository.saveAll(accessories);
+            return true;
         }
+        return false;
     }
     
-    // AccessoryService
-/** Increases the stock of an accessory. @return false if not found or quantity not positive */
-/**
+    /**
      * Increases the stock of an accessory.
      * 
      * @param accessoryId the accessory identifier
-     * @param quantity the quantity to restore
+     * @param quantity the quantity to restore; must be positive
+     * @return false if not found or quantity not positive
      */
-    public void restoreStock(String accessoryId, int quantity) {
-        if (quantity <= 0) return;
+    public boolean restoreStock(String accessoryId, int quantity) {
+        if (quantity <= 0) return false;
         
         Accessory accessory = findById(accessoryId);
         if (accessory != null) {
             accessory.setStock(accessory.getStock() + quantity); // Sumamos para restaurar stock
             repository.saveAll(accessories);
+            return true;
         }
+        return false;
     }
 }
