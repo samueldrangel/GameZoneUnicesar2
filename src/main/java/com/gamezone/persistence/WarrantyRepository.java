@@ -32,21 +32,30 @@ public class WarrantyRepository {
      * @param products all products, used to resolve references
      * @return the stored warranties, or an empty list if the file does not exist
      */
-    /** @return raw rows [type, id, saleId, productId, startDate], without resolving references */
-public List<String[]> loadRows() {
-    List<String[]> rows = new ArrayList<>();
-    File file = new File(FILE_PATH);
-    if (!file.exists()) return rows;
-    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-        String line;
-        while ((line = reader.readLine()) != null) {
-            if (line.isBlank()) continue;
-            String[] p = line.split(",", -1);
-            if (p.length >= 5) rows.add(p);
+    /**
+     * @return raw rows [type, id, saleId, productId, startDate], without
+     * resolving references
+     */
+    public List<String[]> loadRows() {
+        List<String[]> rows = new ArrayList<>();
+        File file = new File(FILE_PATH);
+        if (!file.exists()) {
+            return rows;
         }
-    } catch (IOException e) {
-        System.err.println("Error loading warranties: " + e.getMessage());
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) {
+                    continue;
+                }
+                String[] p = line.split(",", -1);
+                if (p.length >= 5) {
+                    rows.add(p);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading warranties: " + e.getMessage());
+        }
+        return rows;
     }
-    return rows;
-}
 }
