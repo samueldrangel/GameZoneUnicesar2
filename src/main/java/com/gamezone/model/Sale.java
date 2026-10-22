@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * A sale transaction with one or more items (products or accessories). It may
- * carry the discount granted by a promotion.
+ * carry the discount granted by a promotion and extended warranty costs.
  */
 public class Sale {
 
@@ -17,6 +17,7 @@ public class Sale {
     private List<Product> items;
     private String appliedPromotionName;
     private double discountAmount;
+    private double extendedWarrantyCost;
 
     /**
      * Creates a sale without discount.
@@ -39,9 +40,8 @@ public class Sale {
         this.items = new ArrayList<>(items);
         this.appliedPromotionName = null;
         this.discountAmount = 0;
+        this.extendedWarrantyCost = 0.0;
     }
-
-    private double extendedWarrantyCost;
 
     public double getExtendedWarrantyCost() {
         return extendedWarrantyCost;
@@ -115,15 +115,14 @@ public class Sale {
     /**
      * Calculates the final total.
      *
-     * @return the subtotal minus the applied discount
+     * @return the subtotal minus the applied discount plus extended warranty cost
      */
     public double getTotalAmount() {
         return getSubtotal() - discountAmount + extendedWarrantyCost;
     }
 
     /**
-     * Builds the sale receipt with the subtotal, the discount and the final
-     * total.
+     * Builds the sale receipt with the subtotal, the discount, extended warranty cost, and final total.
      *
      * @return the receipt text, in Spanish
      */
@@ -144,6 +143,7 @@ public class Sale {
         } else {
             sb.append("Descuento: $0.00 (sin promoción)\n");
         }
+        sb.append(String.format("Garantías extendidas: $%.2f%n", extendedWarrantyCost));
         sb.append(String.format("Total final: $%.2f", getTotalAmount()));
         return sb.toString();
     }
@@ -154,5 +154,4 @@ public class Sale {
     public boolean canBeReturned() {
         return !LocalDate.now().isAfter(date.plusDays(30));
     }
-
 }
