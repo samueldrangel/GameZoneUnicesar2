@@ -31,6 +31,16 @@ public class ConsoleUI {
     private Scanner scanner;
 
     public ConsoleUI() {
+        private ProductService productService;
+    private AccessoryService accessoryService;
+    private PersonService personService;
+    private PromotionService promotionService;
+    private WarrantyService warrantyService; // Servicio de garantías integrado
+    private SaleService saleService;
+    private ReturnService returnService; // Servicio de devoluciones integrado
+    private Scanner scanner;
+
+    public ConsoleUI() {
         this.productService = new ProductService();
         this.accessoryService = new AccessoryService(new AccessoryRepository());
         this.personService = new PersonService();
@@ -39,10 +49,24 @@ public class ConsoleUI {
         // Inicialización del servicio de garantías con su repositorio
         this.warrantyService = new WarrantyService(new WarrantyRepository());
         
-        this.saleService = new SaleService(new SaleRepository(), productService, accessoryService, personService, promotionService, warrantyService);
+        this.saleService = new SaleService(
+            new SaleRepository(), 
+            productService, 
+            accessoryService, 
+            personService, 
+            promotionService, 
+            warrantyService
+        );
 
-        // Inicialización correcta de ReturnService con sus dependencias
-        this.returnService = new ReturnService(new ReturnRepository(), saleService, productService, accessoryService);
+        // Inicialización completa y correcta de ReturnService con las 5 dependencias
+        this.returnService = new ReturnService(
+            new ReturnRepository(), 
+            saleService, 
+            productService, 
+            accessoryService, 
+            warrantyService
+        );
+        
         this.scanner = new Scanner(System.in);
     }
 

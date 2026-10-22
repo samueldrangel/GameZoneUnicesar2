@@ -1,6 +1,7 @@
 package com.gamezone.service;
 
 import com.gamezone.model.Accessory;
+import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
@@ -8,21 +9,24 @@ import com.gamezone.persistence.ReturnRepository;
 import java.time.LocalDate;
 import java.util.*;
 
-/** Business rules for returns and the monthly balance. */
+/**
+ * Business rules for returns and the monthly balance.
+ */
 public class ReturnService {
+
     private final ReturnRepository repository;
     private final SaleService saleService;
     private final ProductService productService;
     private final AccessoryService accessoryService; // <-- Añadido
     private final List<Return> returns;
     private WarrantyService warrantyService; // Añadido aquí
+
     /**
-     * @param repository      the return repository
-     * @param saleService     service used to find sales
-     * @param productService  service used to restore product stock
+     * @param repository the return repository
+     * @param saleService service used to find sales
+     * @param productService service used to restore product stock
      * @param accessoryService service used to restore accessory stock
      */
-
 
     // Constructor completo actualizado
     public ReturnService(ReturnRepository repository, SaleService saleService, ProductService productService, AccessoryService accessoryService, WarrantyService warrantyService, java.util.List<com.gamezone.model.Return> returns) {
@@ -37,11 +41,13 @@ public class ReturnService {
     /**
      * Registers a return after validating existence, deadline and ownership.
      *
-     * @param saleId     original sale id
-     * @param productIds ids of the returned products (repeat an id for several units)
-     * @param reason     return reason
+     * @param saleId original sale id
+     * @param productIds ids of the returned products (repeat an id for several
+     * units)
+     * @param reason return reason
      * @return the registered return
-     * @throws IllegalArgumentException with a Spanish message if a validation fails
+     * @throws IllegalArgumentException with a Spanish message if a validation
+     * fails
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
         Sale sale = saleService.findSaleById(saleId);
@@ -67,7 +73,9 @@ public class ReturnService {
         }
         Map<String, Integer> alreadyReturned = countReturned(saleId);
         Map<String, Integer> requested = new LinkedHashMap<>();
-        for (String id : productIds) requested.merge(id, 1, Integer::sum);
+        for (String id : productIds) {
+            requested.merge(id, 1, Integer::sum);
+        }
 
         List<Product> toReturn = new ArrayList<>();
         for (Map.Entry<String, Integer> e : requested.entrySet()) {
@@ -81,17 +89,27 @@ public class ReturnService {
                 throw new IllegalArgumentException(
                         "El producto " + id + " ya fue devuelto o excede la cantidad comprada.");
             }
-            for (int i = 0; i < e.getValue(); i++) toReturn.add(soldById.get(id));
+            for (int i = 0; i < e.getValue(); i++) {
+                toReturn.add(soldById.get(id));
+            }
         }
 
+        double warrantyRefund = 0;
+        for (String id : requested.keySet()) {
+            if (soldById.get(id) instanceof Console) {
+                warrantyRefund += warrantyService.cancelWarranties(id, saleId);
+            }
+        }
+
+// Asegúrate de pasar 'warrantyRefund' al constructor del objeto Return:
         Return r = new Return("RET-" + (returns.size() + 1), LocalDate.now(), sale,
-                toReturn, reason.trim().replace(',', ' '));
-        
+                toReturn, reason.trim().replace(',', ' '), warrantyRefund);
+
         // Restauración de stock diferenciada entre accesorios y productos generales
         for (Map.Entry<String, Integer> e : requested.entrySet()) {
             String productId = e.getKey();
             int quantity = e.getValue();
-            
+
             Product product = soldById.get(productId);
             if (product instanceof Accessory) {
                 accessoryService.restoreStock(productId, quantity);
@@ -105,25 +123,35 @@ public class ReturnService {
         return r;
     }
 
-    /** @return all returns */
+    /**
+     * @return all returns
+     */
     public List<Return> viewAllReturns() {
         return new ArrayList<>(returns);
     }
 
-    /** @return the returns of the sales of a customer */
+    /**
+     * @return the returns of the sales of a customer
+     */
     public List<Return> viewReturnsByCustomer(String customerId) {
         List<Return> result = new ArrayList<>();
         for (Return r : returns) {
-            if (r.getSale().getCustomer().getId().equals(customerId)) result.add(r);
+            if (r.getSale().getCustomer().getId().equals(customerId)) {
+                result.add(r);
+            }
         }
         return result;
     }
 
-    /** @return the returns of a sale */
+    /**
+     * @return the returns of a sale
+     */
     public List<Return> viewReturnsBySale(String saleId) {
         List<Return> result = new ArrayList<>();
         for (Return r : returns) {
-            if (r.getSale().getSaleId().equals(saleId)) result.add(r);
+            if (r.getSale().getSaleId().equals(saleId)) {
+                result.add(r);
+            }
         }
         return result;
     }
@@ -154,7 +182,7 @@ public class ReturnService {
      * Net balance of a month: sales total minus returns total.
      *
      * @param month month from 1 to 12
-     * @param year  year
+     * @param year year
      * @return the net balance
      * @throws IllegalArgumentException if the month is invalid
      */
@@ -163,14 +191,18 @@ public class ReturnService {
     }
 
     private void checkMonth(int month) {
-        if (month < 1 || month > 12) throw new IllegalArgumentException("El mes debe estar entre 1 y 12.");
+        if (month < 1 || month > 12) {
+            throw new IllegalArgumentException("El mes debe estar entre 1 y 12.");
+        }
     }
 
     private Map<String, Integer> countReturned(String saleId) {
         Map<String, Integer> count = new HashMap<>();
         for (Return r : returns) {
             if (r.getSale().getSaleId().equals(saleId)) {
-                for (Product p : r.getReturnedProducts()) count.merge(p.getId(), 1, Integer::sum);
+                for (Product p : r.getReturnedProducts()) {
+                    count.merge(p.getId(), 1, Integer::sum);
+                }
             }
         }
         return count;

@@ -23,7 +23,7 @@ public class ReturnRepository {
                     for (Product p : r.getReturnedProducts()) ids.add(p.getId());
                     writer.println(r.getReturnId() + "," + r.getDate() + "," + r.getSale().getSaleId()
                             + "," + String.join(";", ids) + "," + r.getReason()
-                            + "," + r.getRefundAmount());
+                            + "," + r.getRefundAmount()+ "," + r.getWarrantyRefund());
                 }
             }
         } catch (IOException e) {
