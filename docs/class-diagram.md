@@ -1,94 +1,54 @@
 ```mermaid
 classDiagram
-    namespace Model {
-        class Person { <<abstract>> }
-        class Customer
-        class Seller
-        class Product { <<abstract>> }
-        class VideoGame
-        class Console
-        class Accessory { <<abstract>> }
-        class Controller
-        class Cable
-        class Memory
-        class Promotion { <<abstract>> +calculateDiscount(Sale)* double }
-        class PercentageDiscount
-        class CategoryDiscount
-        class BulkPurchaseDiscount
-        class Warranty { <<abstract>> +getDurationInMonths()* int +getAdditionalCost()* double }
-        class BasicWarranty
-        class ExtendedWarranty
-        class Sale { +getSubtotal() double +getTotalAmount() double +canBeReturned() boolean +generateReceipt() String }
-        class Return { +calculateRefundAmount() double +generateReturnReceipt() String }
+    class RuntimeException
+    class GameZoneException {
+        <<abstract>>
+        -String errorCode
+        +getErrorCode() String
     }
-    namespace Persistence {
-        class ProductRepository
-        class AccessoryRepository
-        class PersonRepository
-        class PromotionRepository
-        class WarrantyRepository
-        class SaleRepository
-        class ReturnRepository
+    class ResourceNotFoundException
+    class BusinessRuleException
+    class InvalidDataException
+    class PersistenceException
+    class ProductValidator {
+        +validateProductData(String id, String title, double price, int stock)$ void
+        +validateStockAvailability(Product p, int qty)$ void
+        +validateProductExists(Product p, String id)$ void
     }
-    namespace Service {
-        class ProductService
-        class AccessoryService
-        class PersonService
-        class PromotionService { +findBestPromotionFor(Sale) Promotion }
-        class WarrantyService { +cancelWarranties(String, String) double }
-        class SaleService { +registerSale(...) boolean }
-        class ReturnService { +registerReturn(...) Return +generateMonthlyBalance(int, int) double }
+    class PersonValidator {
+        +validatePersonData(String id, String name, String email, String phone)$ void
+        +validatePersonExists(Person p, String id)$ void
+        +validateUniquePerson(List~Person~ existing, String newId)$ void
     }
-    namespace UI {
-        class ConsoleMenu { +showMainMenu() void }
+    class SaleValidator {
+        +validateSaleData(Customer c, Seller s, List~Product~ items)$ void
+        +validateSaleExists(Sale s, String id)$ void
     }
+    class ProductService
+    class PersonService
+    class SaleService
+    class ProductRepository
+    class PersonRepository
+    class SaleRepository
+    class ConsoleMenu
 
-    Person <|-- Customer
-    Person <|-- Seller
-    Product <|-- VideoGame
-    Product <|-- Console
-    Product <|-- Accessory
-    Accessory <|-- Controller
-    Accessory <|-- Cable
-    Accessory <|-- Memory
-    Promotion <|-- PercentageDiscount
-    Promotion <|-- CategoryDiscount
-    Promotion <|-- BulkPurchaseDiscount
-    Warranty <|-- BasicWarranty
-    Warranty <|-- ExtendedWarranty
+    RuntimeException <|-- GameZoneException
+    GameZoneException <|-- ResourceNotFoundException
+    GameZoneException <|-- BusinessRuleException
+    GameZoneException <|-- InvalidDataException
+    GameZoneException <|-- PersistenceException
 
-    Sale "1" --> "1" Customer
-    Sale "1" --> "1" Seller
-    Sale "1" --> "1..*" Product
-    Warranty "*" --> "1" Product
-    Warranty "*" --> "1" Sale
-    Return "*" --> "1" Sale
-    Return "1" --> "1..*" Product
-    Promotion ..> Sale
-    Accessory ..> Console : compatible ids
-
-    ProductService --> ProductRepository
-    AccessoryService --> AccessoryRepository
-    PersonService --> PersonRepository
-    PromotionService --> PromotionRepository
-    WarrantyService --> WarrantyRepository
-    WarrantyService --> SaleRepository
-    SaleService --> SaleRepository
-    ReturnService --> ReturnRepository
-    SaleService --> ProductService
-    SaleService --> AccessoryService
-    SaleService --> PersonService
-    SaleService --> PromotionService
-    SaleService --> WarrantyService
-    ReturnService --> SaleService
-    ReturnService --> ProductService
-    ReturnService --> AccessoryService
-    ReturnService --> WarrantyService
-    ConsoleMenu --> ProductService
-    ConsoleMenu --> AccessoryService
-    ConsoleMenu --> PersonService
-    ConsoleMenu --> PromotionService
-    ConsoleMenu --> WarrantyService
-    ConsoleMenu --> SaleService
-    ConsoleMenu --> ReturnService
+    ProductService ..> ProductValidator : calls
+    PersonService ..> PersonValidator : calls
+    SaleService ..> SaleValidator : calls
+    ProductValidator ..> InvalidDataException : throws
+    ProductValidator ..> BusinessRuleException : throws
+    ProductValidator ..> ResourceNotFoundException : throws
+    PersonValidator ..> InvalidDataException : throws
+    PersonValidator ..> BusinessRuleException : throws
+    SaleValidator ..> BusinessRuleException : throws
+    ProductRepository ..> PersistenceException : throws
+    PersonRepository ..> PersistenceException : throws
+    SaleRepository ..> PersistenceException : throws
+    ConsoleMenu ..> GameZoneException : catches by type
 ```
