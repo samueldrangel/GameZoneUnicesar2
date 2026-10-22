@@ -4,8 +4,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/** A (possibly partial) return of products from a previous sale. */
+/**
+ * A (possibly partial) return of products from a previous sale.
+ */
 public class Return {
+
     private final String returnId;
     private final LocalDate date;
     private final Sale sale;
@@ -16,14 +19,14 @@ public class Return {
     /**
      * Creates a return and calculates its refund.
      *
-     * @param returnId         return id
-     * @param date             return date
-     * @param sale             original sale
+     * @param returnId return id
+     * @param date return date
+     * @param sale original sale
      * @param returnedProducts returned products (one entry per unit)
-     * @param reason           return reason
+     * @param reason return reason
      */
     public Return(String returnId, LocalDate date, Sale sale,
-                  List<Product> returnedProducts, String reason) {
+            List<Product> returnedProducts, String reason) {
         this.returnId = returnId;
         this.date = date;
         this.sale = sale;
@@ -32,12 +35,29 @@ public class Return {
         calculateRefundAmount();
     }
 
-    public String getReturnId() { return returnId; }
-    public LocalDate getDate() { return date; }
-    public Sale getSale() { return sale; }
-    public List<Product> getReturnedProducts() { return new ArrayList<>(returnedProducts); }
-    public String getReason() { return reason; }
-    public double getRefundAmount() { return refundAmount; }
+    public String getReturnId() {
+        return returnId;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public Sale getSale() {
+        return sale;
+    }
+
+    public List<Product> getReturnedProducts() {
+        return new ArrayList<>(returnedProducts);
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public double getRefundAmount() {
+        return refundAmount;
+    }
 
     private double discountRatio() {
         double subtotal = sale.getSubtotal();
@@ -49,18 +69,23 @@ public class Return {
     }
 
     /**
-     * Sums the proportional prices of the returned products and stores the result.
+     * Sums the proportional prices of the returned products and stores the
+     * result.
      *
      * @return the refund amount
      */
     public double calculateRefundAmount() {
         double total = 0;
-        for (Product p : returnedProducts) total += itemRefund(p);
+        for (Product p : returnedProducts) {
+            total += itemRefund(p);
+        }
         refundAmount = total;
         return refundAmount;
     }
 
-    /** @return a Spanish receipt with the return details */
+    /**
+     * @return a Spanish receipt with the return details
+     */
     public String generateReturnReceipt() {
         StringBuilder sb = new StringBuilder();
         sb.append("===== RECIBO DE DEVOLUCIÓN =====\n");
