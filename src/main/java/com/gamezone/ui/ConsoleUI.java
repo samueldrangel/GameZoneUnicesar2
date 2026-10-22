@@ -282,6 +282,34 @@ public class ConsoleUI {
         }
     }
 
+    // --- MÉTODOS DE APOYO DE LISTADOS ---
+    private void listProducts() {
+        System.out.println("\n--- PRODUCTOS DISPONIBLES ---");
+        for (Product p : productService.listAllProducts()) {
+            System.out.println(" - ID: " + p.getId() + " | " + p.getTitle() + " ($" + p.getPrice() + ")");
+        }
+    }
+
+    private void printAccessories(String title, List<Accessory> accessories) {
+        System.out.println("\n--- " + title + " ---");
+        if (accessories.isEmpty()) {
+            System.out.println("No hay accesorios disponibles.");
+        } else {
+            for (Accessory a : accessories) {
+                System.out.println(" - ID: " + a.getId() + " | " + a.getTitle() + " ($" + a.getPrice() + ")");
+            }
+        }
+    }
+
+    private void listSellers() {
+        System.out.println("\n--- VENDEDORES DISPONIBLES ---");
+        for (Person p : personService.listAllPersons()) {
+            if (p instanceof Seller) {
+                System.out.println(" - ID: " + p.getId() + " | Nombre: " + p.getName());
+            }
+        }
+    }
+
     // --- RESTO DE FUNCIONALIDADES EXISTENTES ---
     private void listProductsAndAccessories() {
         System.out.println("\n--- INVENTARIO DE PRODUCTOS Y ACCESORIOS ---");
@@ -413,51 +441,35 @@ public class ConsoleUI {
     }
 
     private void registerSale() {
-        String saleId = readLine("Ingrese ID de la Venta: ");
-
-        String custId = readLine("Ingrese ID del Cliente: ");
-        Customer customer = personService.findCustomerById(custId);
-        if (customer == null) {
-            System.out.println("¡Cliente no encontrado!");
-            return;
-        }
-
-        String sellId = readLine("Ingrese ID del Vendedor: ");
-        Seller seller = personService.findSellerById(sellId);
-        if (seller == null) {
-            System.out.println("¡Vendedor no encontrado!");
-            return;
-        }
+        String saleId = readLine("ID de la venta: ");
+        Customer customer = personService.findCustomerById(readLine("ID del cliente: "));
+        if (customer == null) { System.out.println("Cliente no encontrado. Venta cancelada."); return; }
+        listSellers();
+        Seller seller = personService.findSellerById(readLine("ID del vendedor: "));
+        if (seller == null) { System.out.println("Vendedor no encontrado. Venta cancelada."); return; }
 
         List<Product> items = new ArrayList<>();
-        String choice;
-        do {
-            String itemId = readLine("Ingrese ID del producto o accesorio a agregar: ");
-
-            Product product = productService.findById(itemId);
-            if (product == null) {
-                product = accessoryService.findById(itemId);
-            }
-
-            if (product != null) {
-                items.add(product);
-                System.out.println("Ítem agregado al carrito de venta.");
+        boolean addMore = true;
+        while (addMore) {
+            String kind = readLine("¿Agregar accesorio (A) o producto (P)? ");
+            Product item;
+            if (kind.equalsIgnoreCase("A")) {
+                printAccessories("ACCESORIOS DISPONIBLES",
+                        accessoryService.listAllAccessories());
+                item = accessoryService.findById(readLine("ID del accesorio: "));
             } else {
-                System.out.println("¡Producto o accesorio no encontrado!");
+                listProducts();
+                item = productService.findById(readLine("ID del producto: "));
             }
-
-            choice = readLine("¿Agregar otro ítem a esta venta? (s/n): ");
-        } while (choice.equalsIgnoreCase("s") || choice.equalsIgnoreCase("y"));
-
-        if (items.isEmpty()) {
-            System.out.println("Venta cancelada. No se agregaron ítems.");
-            return;
+            if (item == null) System.out.println("Ítem no encontrado.");
+            else { items.add(item); System.out.println("Ítem agregado: " + item.getTitle()); }
+            addMore = readLine("¿Agregar otro ítem? (s/n): ").equalsIgnoreCase("s");
         }
+        if (items.isEmpty()) { System.out.println("La venta debe tener al menos un ítem."); return; }
 
-        // Selección de garantías extendidas para las consolas compradas
         List<String> extendedIds = new ArrayList<>();
         for (Product item : items) {
-            if (item instanceof com.gamezone.model.Console && !extendedIds.contains(item.getId())) {
+            if (item instanceof Console && !extendedIds.contains(item.getId())) {
                 if (readLine("¿Agregar garantía extendida a " + item.getTitle() + "? (s/n): ")
                         .equalsIgnoreCase("s")) {
                     extendedIds.add(item.getId());
@@ -465,11 +477,11 @@ public class ConsoleUI {
             }
         }
 
-        boolean success = saleService.registerSale(saleId, customer, seller, items, extendedIds);
-        if (success) {
+        if (saleService.registerSale(saleId, customer, seller, items, extendedIds)) {
             System.out.println("¡Venta registrada exitosamente!");
+            System.out.println(saleService.findSaleById(saleId).generateReceipt());
         } else {
-            System.out.println("Error al registrar la venta. Verifique la disponibilidad de stock.");
+            System.out.println("No se pudo registrar la venta (revise el stock o el ID de la venta).");
         }
     }
 
