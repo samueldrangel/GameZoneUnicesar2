@@ -2,7 +2,6 @@ package com.gamezone.service;
 
 import com.gamezone.model.*;
 import com.gamezone.persistence.*;
-import com.gamezone.validator.PersonValidator;
 import java.util.List;
 import validation.PersonValidator;
 
