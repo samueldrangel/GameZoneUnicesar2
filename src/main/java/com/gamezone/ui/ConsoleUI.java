@@ -198,8 +198,9 @@ public class ConsoleUI {
                     case 5:
                         int month = readInt("Mes (1-12): ");
                         int year = readInt("Año: ");
-                        System.out.println(String.format("Balance neto de %02d/%d: $%.2f",
-                                month, year, returnService.generateMonthlyBalance(month, year)));
+                        System.out.println(String.format("Total de ventas: $%.2f", returnService.calculateMonthlySales(month, year)));
+                        System.out.println(String.format("Total de devoluciones: $%.2f", returnService.calculateMonthlyReturns(month, year)));
+                        System.out.println(String.format("Balance neto: $%.2f", returnService.generateMonthlyBalance(month, year)));
                         break;
                     case 0:
                         break;

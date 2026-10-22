@@ -125,6 +125,28 @@ public class ReturnService {
         return result;
     }
 
+    public double calculateMonthlySales(int month, int year) {
+        checkMonth(month);
+        double total = 0;
+        for (Sale s : saleService.listAllSales()) {
+            if (s.getDate().getMonthValue() == month && s.getDate().getYear() == year) {
+                total += s.getTotalAmount();   // final total, with discount and extended warranties
+            }
+        }
+        return total;
+    }
+
+    public double calculateMonthlyReturns(int month, int year) {
+        checkMonth(month);
+        double total = 0;
+        for (Return r : returns) {
+            if (r.getDate().getMonthValue() == month && r.getDate().getYear() == year) {
+                total += r.getRefundAmount();
+            }
+        }
+        return total;
+    }
+
     /**
      * Net balance of a month: sales total minus returns total.
      *
@@ -134,22 +156,11 @@ public class ReturnService {
      * @throws IllegalArgumentException if the month is invalid
      */
     public double generateMonthlyBalance(int month, int year) {
-        if (month < 1 || month > 12) {
-            throw new IllegalArgumentException("El mes debe estar entre 1 y 12.");
-        }
-        double sales = 0;
-        for (Sale s : saleService.listAllSales()) {
-            if (s.getDate().getMonthValue() == month && s.getDate().getYear() == year) {
-                sales += s.getTotalAmount();
-            }
-        }
-        double refunds = 0;
-        for (Return r : returns) {
-            if (r.getDate().getMonthValue() == month && r.getDate().getYear() == year) {
-                refunds += r.getRefundAmount();
-            }
-        }
-        return sales - refunds;
+        return calculateMonthlySales(month, year) - calculateMonthlyReturns(month, year);
+    }
+
+    private void checkMonth(int month) {
+        if (month < 1 || month > 12) throw new IllegalArgumentException("El mes debe estar entre 1 y 12.");
     }
 
     private Map<String, Integer> countReturned(String saleId) {
