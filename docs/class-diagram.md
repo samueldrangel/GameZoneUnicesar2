@@ -1,56 +1,94 @@
 ```mermaid
 classDiagram
-    class Warranty {
-        <<abstract>>
-        -String id
-        -Product product
-        -Sale sale
-        -LocalDate startDate
-        -LocalDate endDate
-        +getDurationInMonths() int
-        +getWarrantyType() String
-        +getAdditionalCost() double
-        +isActive(LocalDate date) boolean
-        +generateWarrantyCertificate() String
+    namespace Model {
+        class Person { <<abstract>> }
+        class Customer
+        class Seller
+        class Product { <<abstract>> }
+        class VideoGame
+        class Console
+        class Accessory { <<abstract>> }
+        class Controller
+        class Cable
+        class Memory
+        class Promotion { <<abstract>> +calculateDiscount(Sale)* double }
+        class PercentageDiscount
+        class CategoryDiscount
+        class BulkPurchaseDiscount
+        class Warranty { <<abstract>> +getDurationInMonths()* int +getAdditionalCost()* double }
+        class BasicWarranty
+        class ExtendedWarranty
+        class Sale { +getSubtotal() double +getTotalAmount() double +canBeReturned() boolean +generateReceipt() String }
+        class Return { +calculateRefundAmount() double +generateReturnReceipt() String }
     }
-    class BasicWarranty
-    class ExtendedWarranty
-    class WarrantyRepository {
-        +saveAll(List~Warranty~ warranties) void
-        +loadAll(List~Sale~ sales, List~Product~ products) List~Warranty~
+    namespace Persistence {
+        class ProductRepository
+        class AccessoryRepository
+        class PersonRepository
+        class PromotionRepository
+        class WarrantyRepository
+        class SaleRepository
+        class ReturnRepository
     }
-    class WarrantyService {
-        -WarrantyRepository repository
-        +loadStored(List~Sale~ sales, List~Product~ products) void
-        +assignBasicWarranty(Product p, Sale s, LocalDate d) BasicWarranty
-        +assignExtendedWarranty(Product p, Sale s, LocalDate d) ExtendedWarranty
-        +findWarrantyByProduct(String productId, String saleId) Warranty
-        +listAllWarranties() List~Warranty~
-        +listActiveWarranties() List~Warranty~
-        +listWarrantiesExpiringSoon(int daysAhead) List~Warranty~
+    namespace Service {
+        class ProductService
+        class AccessoryService
+        class PersonService
+        class PromotionService { +findBestPromotionFor(Sale) Promotion }
+        class WarrantyService { +cancelWarranties(String, String) double }
+        class SaleService { +registerSale(...) boolean }
+        class ReturnService { +registerReturn(...) Return +generateMonthlyBalance(int, int) double }
     }
-    class Sale {
-        -double extendedWarrantyCost
-        +getTotalAmount() double
+    namespace UI {
+        class ConsoleMenu { +showMainMenu() void }
     }
-    class SaleService {
-        -WarrantyService warrantyService
-        +registerSale(Customer c, Seller s, List~Product~ items, List~String~ extendedIds) boolean
-    }
-    class Product {
-        <<abstract>>
-    }
-    class Console
-    class ConsoleMenu
 
+    Person <|-- Customer
+    Person <|-- Seller
+    Product <|-- VideoGame
+    Product <|-- Console
+    Product <|-- Accessory
+    Accessory <|-- Controller
+    Accessory <|-- Cable
+    Accessory <|-- Memory
+    Promotion <|-- PercentageDiscount
+    Promotion <|-- CategoryDiscount
+    Promotion <|-- BulkPurchaseDiscount
     Warranty <|-- BasicWarranty
     Warranty <|-- ExtendedWarranty
-    Warranty "0..*" --> "1" Product : covers
-    Warranty "0..*" --> "1" Sale : issued in
-    Product <|-- Console
-    WarrantyRepository ..> Warranty
+
+    Sale "1" --> "1" Customer
+    Sale "1" --> "1" Seller
+    Sale "1" --> "1..*" Product
+    Warranty "*" --> "1" Product
+    Warranty "*" --> "1" Sale
+    Return "*" --> "1" Sale
+    Return "1" --> "1..*" Product
+    Promotion ..> Sale
+    Accessory ..> Console : compatible ids
+
+    ProductService --> ProductRepository
+    AccessoryService --> AccessoryRepository
+    PersonService --> PersonRepository
+    PromotionService --> PromotionRepository
     WarrantyService --> WarrantyRepository
+    WarrantyService --> SaleRepository
+    SaleService --> SaleRepository
+    ReturnService --> ReturnRepository
+    SaleService --> ProductService
+    SaleService --> AccessoryService
+    SaleService --> PersonService
+    SaleService --> PromotionService
     SaleService --> WarrantyService
-    SaleService ..> Console : instanceof
+    ReturnService --> SaleService
+    ReturnService --> ProductService
+    ReturnService --> AccessoryService
+    ReturnService --> WarrantyService
+    ConsoleMenu --> ProductService
+    ConsoleMenu --> AccessoryService
+    ConsoleMenu --> PersonService
+    ConsoleMenu --> PromotionService
     ConsoleMenu --> WarrantyService
     ConsoleMenu --> SaleService
+    ConsoleMenu --> ReturnService
+```
