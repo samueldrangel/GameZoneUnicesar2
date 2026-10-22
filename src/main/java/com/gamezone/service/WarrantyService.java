@@ -105,4 +105,27 @@ public class WarrantyService {
     private String newId() {
         return "W-" + UUID.randomUUID().toString().substring(0, 8);
     }
+    
+    
+    /**
+     * Removes the warranties of a product in a sale.
+     *
+     * @return the refundable cost: 0 for basic warranties, the additional cost
+     * for extended ones
+     */
+    public double cancelWarranties(String productId, String saleId) {
+        double refundable = 0;
+        Iterator<Warranty> it = warranties.iterator();
+        while (it.hasNext()) {
+            Warranty w = it.next();
+            if (w.getProduct().getId().equals(productId) && w.getSale().getSaleId().equals(saleId)) {
+                if (w instanceof ExtendedWarranty) {
+                    refundable += w.getAdditionalCost();
+                }
+                it.remove();
+            }
+        }
+        repository.saveAll(warranties);
+        return refundable;
+    }
 }
