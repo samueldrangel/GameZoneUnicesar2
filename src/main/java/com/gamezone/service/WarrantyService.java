@@ -1,6 +1,7 @@
 package com.gamezone.service;
 
 import com.gamezone.model.*;
+import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import java.time.LocalDate;
 import java.util.*;
@@ -16,10 +17,28 @@ public class WarrantyService {
     }
 
     /** Loads stored warranties once sales and products are available. */
-    public void loadStored(List<Sale> sales, List<Product> products) {
-        warranties.clear();
-        warranties.addAll(repository.loadAll(sales, products));
+    public WarrantyService(WarrantyRepository repository, SaleRepository saleRepository,
+                       ProductService productService, AccessoryService accessoryService,
+                       PersonService personService) {
+    this.repository = repository;
+    List<Product> all = new ArrayList<>(productService.listAllProducts());
+    all.addAll(accessoryService.listAllAccessories());
+    Map<String, Sale> salesById = new HashMap<>();
+    for (Sale s : saleRepository.loadAll(personService.listAllPersons(), all)) {
+        salesById.put(s.getSaleId(), s);
     }
+    Map<String, Product> productsById = new HashMap<>();
+    for (Product p : all) productsById.put(p.getId(), p);
+    for (String[] row : repository.loadRows()) {
+        Sale sale = salesById.get(row[2]);
+        Product product = productsById.get(row[3]);
+        if (sale == null || product == null) continue;
+        LocalDate start = LocalDate.parse(row[4]);
+        warranties.add("EXTENDED".equals(row[0])
+                ? new ExtendedWarranty(row[1], product, sale, start)
+                : new BasicWarranty(row[1], product, sale, start));
+    }
+}
 
     /** Creates and stores a basic warranty. @return the new warranty */
     public BasicWarranty assignBasicWarranty(Product product, Sale sale, LocalDate startDate) {

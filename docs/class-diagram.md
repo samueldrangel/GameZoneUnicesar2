@@ -7,9 +7,9 @@ classDiagram
         -Sale sale
         -LocalDate startDate
         -LocalDate endDate
-        +getDurationInMonths()* int
-        +getWarrantyType()* String
-        +getAdditionalCost()* double
+        +getDurationInMonths() int
+        +getWarrantyType() String
+        +getAdditionalCost() double
         +isActive(LocalDate date) boolean
         +generateWarrantyCertificate() String
     }
@@ -37,14 +37,16 @@ classDiagram
         -WarrantyService warrantyService
         +registerSale(Customer c, Seller s, List~Product~ items, List~String~ extendedIds) boolean
     }
-    class Product { <<abstract>> }
+    class Product {
+        <<abstract>>
+    }
     class Console
     class ConsoleMenu
 
     Warranty <|-- BasicWarranty
     Warranty <|-- ExtendedWarranty
-    Warranty "*" --> "1" Product : covers
-    Warranty "*" --> "1" Sale : issued in
+    Warranty "0..*" --> "1" Product : covers
+    Warranty "0..*" --> "1" Sale : issued in
     Product <|-- Console
     WarrantyRepository ..> Warranty
     WarrantyService --> WarrantyRepository
@@ -52,4 +54,3 @@ classDiagram
     SaleService ..> Console : instanceof
     ConsoleMenu --> WarrantyService
     ConsoleMenu --> SaleService
-```

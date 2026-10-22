@@ -32,35 +32,30 @@ public class WarrantyRepository {
      * @param products all products, used to resolve references
      * @return the stored warranties, or an empty list if the file does not exist
      */
-    public List<Warranty> loadAll(List<Sale> sales, List<Product> products) {
-        List<Warranty> result = new ArrayList<>();
+    /**
+     * @return raw rows [type, id, saleId, productId, startDate], without
+     * resolving references
+     */
+    public List<String[]> loadRows() {
+        List<String[]> rows = new ArrayList<>();
         File file = new File(FILE_PATH);
-        if (!file.exists()) return result;
-        Map<String, Sale> salesById = new HashMap<>();
-        for (Sale s : sales) salesById.put(s.getSaleId(), s);
-        Map<String, Product> productsById = new HashMap<>();
-        for (Product p : products) productsById.put(p.getId(), p);
+        if (!file.exists()) {
+            return rows;
+        }
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) continue;
+                if (line.isBlank()) {
+                    continue;
+                }
                 String[] p = line.split(",", -1);
-                if (p.length < 5) continue;
-                Sale sale = salesById.get(p[2]);
-                Product product = productsById.get(p[3]);
-                if (sale == null || product == null) continue;
-                try {
-                    LocalDate start = LocalDate.parse(p[4]);
-                    result.add("EXTENDED".equals(p[0])
-                            ? new ExtendedWarranty(p[1], product, sale, start)
-                            : new BasicWarranty(p[1], product, sale, start));
-                } catch (RuntimeException e) {
-                    System.err.println("Skipping invalid warranty line: " + line);
+                if (p.length >= 5) {
+                    rows.add(p);
                 }
             }
         } catch (IOException e) {
             System.err.println("Error loading warranties: " + e.getMessage());
         }
-        return result;
+        return rows;
     }
 }
