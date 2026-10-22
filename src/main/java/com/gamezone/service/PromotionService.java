@@ -50,12 +50,14 @@ public class PromotionService {
      * @return false if the id already exists
      * @throws IllegalArgumentException if a value is invalid
      */
+    private static final List<String> ALLOWED_CATEGORIES = List.of("VIDEOGAME", "CONSOLE", "ACCESSORY");
+
     public boolean registerCategoryDiscount(String id, String name, LocalDate start,
                                             LocalDate end, double percentage, String category) {
         validateCommon(id, name, start, end);
         validatePercentage(percentage);
-        if (!"VIDEOGAME".equals(category) && !"CONSOLE".equals(category)) {
-            throw new IllegalArgumentException("La categoría debe ser VIDEOGAME o CONSOLE.");
+        if (!ALLOWED_CATEGORIES.contains(category)) {
+            throw new IllegalArgumentException("La categoría debe ser VIDEOGAME, CONSOLE o ACCESSORY.");
         }
         if (findById(id) != null) return false;
         promotions.add(new CategoryDiscount(id, name, start, end, percentage, category));
