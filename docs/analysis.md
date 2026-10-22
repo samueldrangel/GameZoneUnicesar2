@@ -224,3 +224,18 @@ stored warranties and keeps the active ones whose end date is not after
 for persistence. It belongs to the service layer because it is a business query
 over a collection of entities; the ui only calls it and prints the result, and
 the model does not know the catalog.
+
+# Integration Analysis
+
+| ID | Problem | Cause | Solution | Verification |
+|---|---|---|---|---|
+| A1 | Promotions could not target accessories | `CategoryDiscount` only knew VIDEOGAME and CONSOLE | Added the ACCESSORY category (matches `Accessory` instances), validated the three categories in `PromotionService`, added a menu option and a preloaded promotion | A sale with an accessory receives the accessory promotion |
+| A2 | `SaleService -> WarrantyService -> WarrantyRepository -> SaleService` cycle prevented constructor injection | The repository resolved sales during loading | The repository persists only ids; `WarrantyService` resolves references through `SaleRepository` and the product, accessory and person services; `Main` builds objects in a new order. Deviation: two extra constructor parameters, needed to rebuild sales that contain accessories | The application starts and warranties reload after a restart |
+| A3 | The order of operations in `registerSale` changed the result | Requirements 1, 2 and 4 modified the method independently | One eight-step flow; the discount is computed over the item subtotal only; total = subtotal - discount + extended warranties | Receipt totals match a manual calculation |
+| A4 | Returning an accessory did not restore its stock | `ReturnService` only called `ProductService.restoreStock` | `AccessoryService.restoreStock` and delegation by item type | The stock of a returned accessory increases |
+| A5 | The refund exceeded what the customer paid | The refund used list prices | Refund per item = price x (1 - discount / subtotal) | The refund of a discounted sale equals the paid proportion |
+| A6 | The monthly report only showed the net value | `generateMonthlyBalance` returned a single number | `calculateMonthlySales` and `calculateMonthlyReturns` added; sales use the final sale total | The menu shows three values |
+| A7 | A returned console kept its warranty | No requirement defined it | `WarrantyService.cancelWarranties`; the extended cost is refunded and included in the return | The warranty disappears after returning the console |
+
+## Known limitation (out of scope)
+Returning one of two identical consoles in the same sale cancels the warranties of both.
