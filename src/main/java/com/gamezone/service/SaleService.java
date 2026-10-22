@@ -9,6 +9,7 @@ import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.SaleRepository;
+import exceptions.BusinessRuleException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -20,6 +21,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import validation.ProductValidator;
+import validation.SaleValidator;
 
 /**
  * Service managing sales operations, validation rules, promotion applications,
@@ -70,72 +73,69 @@ public class SaleService {
     }
 
     public boolean registerSale(String saleId, Customer customer, Seller seller,
-            List<Product> items, List<String> productIdsWithExtendedWarranty) {
-        // 1. At least one item
-        if (customer == null || seller == null || items == null || items.isEmpty()) {
-            return false;
-        }
-        if (findSaleById(saleId) != null) {
-            return false;
-        }
-
-        // 2. Resolve each item as product or accessory and validate its stock
-        Map<String, Integer> requested = new LinkedHashMap<>();
-        Map<String, Product> resolved = new HashMap<>();
-        for (Product item : items) {
-            requested.merge(item.getId(), 1, Integer::sum);
-            Product current = resolveItem(item);
-            if (current == null) {
-                return false;
-            }
-            resolved.put(item.getId(), current);
-        }
-        for (Map.Entry<String, Integer> e : requested.entrySet()) {
-            if (resolved.get(e.getKey()).getStock() < e.getValue()) {
-                return false;
-            }
-        }
-
-        // 3. Create the sale; the subtotal comes from the items
-        Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, items);
-
-        // 4. Best promotion, computed only over the item subtotal
-        Promotion best = promotionService.findBestPromotionFor(sale);
-        if (best != null) {
-            sale.setAppliedPromotionName(best.getName());
-            sale.setDiscountAmount(best.calculateDiscount(sale));
-        }
-
-        // 5. Basic warranty per console; extended ones on request, adding their cost
-        double extendedCost = 0;
-        for (Product item : items) {
-            if (item instanceof Console) {
-                warrantyService.assignBasicWarranty(item, sale, sale.getDate());
-                if (productIdsWithExtendedWarranty != null
-                        && productIdsWithExtendedWarranty.contains(item.getId())) {
-                    extendedCost += warrantyService
-                            .assignExtendedWarranty(item, sale, sale.getDate()).getAdditionalCost();
-                }
-            }
-        }
-
-        // 6. Final total = subtotal - discount + extended cost (see Sale.getTotalAmount)
-        sale.setExtendedWarrantyCost(extendedCost);
-
-        // 7. Inventory update, delegated by item type
-        for (Map.Entry<String, Integer> e : requested.entrySet()) {
-            if (resolved.get(e.getKey()) instanceof Accessory) {
-                accessoryService.updateStock(e.getKey(), -e.getValue());
-            } else {
-                productService.updateStock(e.getKey(), -e.getValue());
-            }
-        }
-
-        // 8. Persist the sale (warranties were persisted when assigned)
-        sales.add(sale);
-        repository.saveAll(sales);
-        return true;
+        List<Product> items, List<String> productIdsWithExtendedWarranty) {
+    
+    // 1. Validaciones iniciales con SaleValidator
+    SaleValidator.validateSaleData(customer, seller, items);
+    if (findSaleById(saleId) != null) {
+        throw new BusinessRuleException("Ya existe una venta con el identificador " + saleId);
     }
+
+    // 2. Resolve each item as product or accessory and validate its stock
+    Map<String, Integer> requested = new LinkedHashMap<>();
+    Map<String, Product> resolved = new HashMap<>();
+    
+    for (Product item : items) {
+        requested.merge(item.getId(), 1, Integer::sum);
+        Product current = resolveItem(item);
+        ProductValidator.validateProductExists(current, item.getId());
+        resolved.put(item.getId(), current);
+    }
+    
+    for (Map.Entry<String, Integer> e : requested.entrySet()) {
+        ProductValidator.validateStockAvailability(resolved.get(e.getKey()), e.getValue());
+    }
+
+    // 3. Create the sale; the subtotal comes from the items
+    Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, items);
+
+    // 4. Best promotion, computed only over the item subtotal
+    Promotion best = promotionService.findBestPromotionFor(sale);
+    if (best != null) {
+        sale.setAppliedPromotionName(best.getName());
+        sale.setDiscountAmount(best.calculateDiscount(sale));
+    }
+
+    // 5. Basic warranty per console; extended ones on request, adding their cost
+    double extendedCost = 0;
+    for (Product item : items) {
+        if (item instanceof Console) {
+            warrantyService.assignBasicWarranty(item, sale, sale.getDate());
+            if (productIdsWithExtendedWarranty != null
+                    && productIdsWithExtendedWarranty.contains(item.getId())) {
+                extendedCost += warrantyService
+                        .assignExtendedWarranty(item, sale, sale.getDate()).getAdditionalCost();
+            }
+        }
+    }
+
+    // 6. Final total = subtotal - discount + extended cost (see Sale.getTotalAmount)
+    sale.setExtendedWarrantyCost(extendedCost);
+
+    // 7. Inventory update, delegated by item type
+    for (Map.Entry<String, Integer> e : requested.entrySet()) {
+        if (resolved.get(e.getKey()) instanceof Accessory) {
+            accessoryService.updateStock(e.getKey(), -e.getValue());
+        } else {
+            productService.updateStock(e.getKey(), -e.getValue());
+        }
+    }
+
+    // 8. Persist the sale (warranties were persisted when assigned)
+    sales.add(sale);
+    repository.saveAll(sales);
+    return true;
+}
 
     private Product resolveItem(Product item) {
         return (item instanceof Accessory)

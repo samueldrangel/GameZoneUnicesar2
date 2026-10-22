@@ -7,6 +7,11 @@ import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.*;
+import exceptions.BusinessRuleException;
+import exceptions.GameZoneException;
+import exceptions.InvalidDataException;
+import exceptions.PersistenceException;
+import exceptions.ResourceNotFoundException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -586,6 +591,22 @@ public class ConsoleUI {
             }
         } catch (Exception e) {
             System.out.println("Error en los datos ingresados: " + e.getMessage());
+        }
+    }
+
+    private void execute(Runnable action) {
+        try {
+            action.run();
+        } catch (ResourceNotFoundException e) {
+            System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("No se puede completar la operación: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador.");
+        } catch (GameZoneException e) {
+            System.out.println("Ocurrió un error inesperado: " + e.getMessage());
         }
     }
 }

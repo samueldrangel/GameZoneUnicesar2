@@ -1,86 +1,71 @@
 # GameZoneUnicesar
 
 ## Description
-
 GameZoneUnicesar is a Java-based console application developed as an integrated project for academic purposes at Universidad Popular del Cesar. It implements a layered architecture (Model, Persistence, Service, and UI) to manage the inventory, people, sales, promotional discounts, product returns, and warranty tracking of a video game store, with file-based persistence.
 
 The system manages video games, consoles, and gaming accessories (controllers, cables, and memories), as well as customers, sellers, sales, dynamic promotions, returns, and warranties. Accessories can be sold together with video games and consoles in the same transaction, and the system can list which accessories are compatible with a given console.
 
 ## Features
-
-- **Product management:** register video games and consoles, and list the available inventory.
-- **Accessory management:**
-  * Register controllers (connection type and compatible consoles).
-  * Register cables (length in meters and connector type).
-  * Register memories (capacity in GB and memory type).
-  * List all accessories.
-  * List accessories by type.
-  * Query accessories compatible with a specific console.
-- **Person management:** register customers, and list customers and sellers. Sellers are preloaded in `data/persons.csv`.
-- **Sales management:**
-  * Register a sale selecting a customer, a seller, and one or more items (video games, consoles, or accessories).
-  * Query the complete sales history.
-  * Query the purchase history of a specific customer.
-  * Query the sales attended by a specific seller.
-- **Promotion management:**
-  * Register percentage-based discounts (`PercentageDiscount`).
-  * Register category-based discounts for videogames or consoles (`CategoryDiscount`).
-  * Register bulk purchase / wholesale volume discounts (`BulkPurchaseDiscount`).
-  * List active promotions and evaluate/apply the best discount automatically during sale registration.
-- **Return and Refund management:**
-  * Register returns for specific items belonging to a sale within the 30-day return policy limit.
-  * Automatically restore inventory stock (differentiating between general products and accessories) upon successful return processing.
-  * Query returns by customer or by sale.
-  * Generate monthly financial net balance reports (total sales minus total refunds).
-- **Warranty management:**
-  * Automatically assign basic warranties to purchased consoles and optionally add extended warranties.
-  * Query warranty details by product and sale.
-  * List all warranties, currently active warranties, and warranties expiring within a specified number of days.
-- **Business rules:** a sale must contain at least one item, stock is validated for every item, inventory is updated automatically after a sale, and the total is calculated as the sum of item prices minus applicable promotional discounts and including extended warranty costs. Returns validate item ownership, original sale limits, and reason fields.
-- **Persistence:** all information is stored in CSV files and loaded automatically when the application starts. Changes are saved after each operation.
+- **Product management**: register video games and consoles, and list the available inventory with strict validation rules.
+- **Accessory management**:
+  - Register controllers (connection type and compatible consoles).
+  - Register cables (length in meters and connector type).
+  - Register memories (capacity in GB and memory type).
+  - List all accessories, list by type, and query compatibility.
+- **Person management**: register customers, and list customers and sellers. Sellers are preloaded in `data/persons.csv`.
+- **Sales management**:
+  - Register a sale selecting a customer, a seller, and one or more items with automated validation of stock and business rules.
+  - Query complete sales history, purchase history by customer, and sales by seller.
+- **Promotion management**:
+  - Register percentage-based discounts, category-based discounts, and bulk purchase/wholesale volume discounts.
+  - List active promotions and evaluate/apply the best discount automatically during sale registration.
+- **Return and Refund management**:
+  - Register returns for specific items belonging to a sale within the 30-day return policy limit.
+  - Automatically restore inventory stock upon successful return processing.
+  - Query returns by customer or sale and generate monthly financial net balance reports.
+- **Warranty management**:
+  - Automatically assign basic warranties to purchased consoles and optionally add extended warranties.
+  - Query warranty details, list active warranties, and warranties expiring within a specified number of days.
+- **Robust Exception & Validation Layer**:
+  - Standardized custom exception handling via `PersistenceException` (wrapping low-level I/O errors) and `BusinessRuleException`.
+  - Centralized validation rules delegated to dedicated validators (`ProductValidator`, `PersonValidator`, `SaleValidator`).
+  - Differentiated error handling helper integrated into `ConsoleMenu` for safe user interaction and graceful error recovery.
+- **Persistence**: all information is stored in CSV files, protected by custom exception context, and loaded automatically when the application starts.
 
 ## Architecture & Package Structure
-
 The project follows a standard Maven layered structure (`com.gamezone`):
-
-- `com.gamezone.model`: Domain classes.
-  * Abstract class `Person` with subclasses `Customer` and `Seller`.
-  * Abstract class `Product` with subclasses `VideoGame`, `Console`, and `Accessory`.
-  * Abstract class `Accessory` (extends `Product`) with subclasses `Controller`, `Cable`, and `Memory`. It keeps the list of compatible console IDs.
-  * Abstract class `Promotion` with subclasses `PercentageDiscount`, `CategoryDiscount`, and `BulkPurchaseDiscount`.
-  * `Sale`, which holds a customer, a seller, a list of items, the applied promotion name, discount amount, and extended warranty costs.
-  * `Return`, which manages refunded items, original sale references, reasons, date, and refund amount calculation.
-  * `Warranty`, which tracks basic and extended warranty certificates, validity periods, and associated costs.
-  * Inheritance and polymorphism are applied through overridden methods like `getDescription`, `calculateDiscount`, `generateReceipt`, and `generateReturnReceipt`.
-- `com.gamezone.persistence`: File-based reading and writing of data (`ProductRepository`, `AccessoryRepository`, `PersonRepository`, `SaleRepository`, `PromotionRepository`, `ReturnRepository`, `WarrantyRepository`). `AccessoryRepository` and `PromotionRepository` use type discriminator columns to rebuild the correct subclass when loading. `SaleRepository`, `ReturnRepository`, and `WarrantyRepository` store references using item/sale IDs and rebuild object graphs from loaded lists.
-- `com.gamezone.service`: Business rules, data lists, and stock/promotion/return/warranty validations (`ProductService`, `AccessoryService`, `PersonService`, `SaleService`, `PromotionService`, `ReturnService`, `WarrantyService`). `SaleService` delegates inventory updates to `ProductService` or `AccessoryService`, evaluates the best discount via `PromotionService`, and registers warranties via `WarrantyService`. `ReturnService` validates returns, restores stock dynamically, and calculates net financial balances.
-- `com.gamezone.ui`: Command-line interactive menu interface (`ConsoleUI`).
-- `com.gamezone`: Application entry point (`Main`), which creates the repositories, services, and menu, and injects the dependencies.
+- **`com.gamezone.model`**: Domain classes (`Person`, `Product`, `Accessory`, `Promotion`, `Sale`, `Return`, `Warranty`, and their respective subclasses). Inheritance and polymorphism are applied through overridden methods.
+- **`com.gamezone.persistence`**: File-based reading and writing of data (`ProductRepository`, `AccessoryRepository`, `PersonRepository`, `SaleRepository`, `PromotionRepository`, `ReturnRepository`, `WarrantyRepository`). Standard `IOException` handling is wrapped into custom `PersistenceException` to provide enhanced error context.
+- **`com.gamezone.service`**: Business rules, validation delegation, and data coordination (`ProductService`, `AccessoryService`, `PersonService`, `SaleService`, `PromotionService`, `ReturnService`, `WarrantyService`).
+- **`com.gamezone.validator`**: Specialized validation components enforcing business and data integrity rules (`ProductValidator`, `PersonValidator`, `SaleValidator`).
+- **`com.gamezone.exceptions`**: Custom runtime exceptions (`PersistenceException`, `BusinessRuleException`).
+- **`com.gamezone.ui`**: Command-line interactive menu interface (`ConsoleMenu`) featuring a unified error-handling helper routing user operations securely.
+- **`com.gamezone`**: Application entry point (`Main`).
 
 Dependencies between layers follow one direction: `ui → service → persistence → model`.
 
-Design documents are in the `docs/` folder: `analysis.md`, `hierarchy-diagram.md`, `class-diagram.md`, `layers-diagram.md`, and module-specific guides.
+## Design & Exception Documentation
+The `docs/` folder contains comprehensive documentation and architectural diagrams:
+- `analysis.md`, `hierarchy-diagram.md`, `class-diagram.md`, `layers-diagram.md`
+- **`exception-analysis.md`**: Detailed analysis on exception hierarchy, behavior preservation, and menu routing strategies.
+- **`exception-class-diagram.md`**: Mermaid class diagram representing the exception and validation layers.
 
 ## Data Files
-
-The `data/` folder contains the files used for persistence:
-
+The `data/` folder contains CSV files used for persistence:
 | File | Content |
-|---|---|
-| `data/persons.csv` | Customers and sellers (at least 3 sellers are preloaded) |
+| :--- | :--- |
+| `data/persons.csv` | Customers and sellers (at least 3 sellers preloaded) |
 | `data/products.csv` | Video games and consoles |
-| `data/accessories.csv` | Accessories (one controller, one cable, and one memory are preloaded) |
-| `data/sales.csv` | Sales history, including totals, applied promotion names, discount amounts, and extended warranty costs |
-| `data/promotions.csv` | Registered discount promotions and their active date ranges |
-| `data/returns.csv` | Registered product returns, reasons, refunded items, and total refund amounts |
-| `data/warranties.csv` | Registered basic and extended warranties with validity dates |
+| `data/accessories.csv` | Accessories (controllers, cables, memories) |
+| `data/sales.csv` | Sales history, totals, promotions, and extended warranty costs |
+| `data/promotions.csv` | Registered discount promotions and active date ranges |
+| `data/returns.csv` | Product returns, reasons, and refund amounts |
+| `data/warranties.csv` | Basic and extended warranties with validity dates |
 
-If a file does not exist, the system starts with an empty list for that data. Run the application from the repository root so the relative `data/` path resolves correctly.
+If a file does not exist, the system starts with an empty list. Run the application from the repository root so the relative `data/` path resolves correctly.
 
 ## Menu Options
-
-**Main Menu**
-
+### Main Menu
 1. List all products and accessories
 2. Add VideoGame
 3. Add Console
@@ -98,42 +83,37 @@ If a file does not exist, the system starts with an empty list for that data. Ru
 15. Register Bulk Purchase Discount
 16. Gestión de devoluciones (Returns Submenu)
 17. Gestión de garantías (Warranty Submenu)
-0. Exit
+18. Exit
 
-**Returns Submenu (Option 16)**
-
+### Returns Submenu (Option 16)
 1. Registrar una nueva devolución
 2. Consultar todas las devoluciones
 3. Consultar devoluciones por cliente
 4. Consultar devoluciones por venta
 5. Consultar balance mensual
-0. Volver
+6. Volver
 
-**Warranty Submenu (Option 17)**
-
+### Warranty Submenu (Option 17)
 1. Consultar garantía de un producto en una venta
 2. Listar todas las garantías
 3. Listar garantías vigentes
 4. Listar garantías próximas a vencer
-0. Volver
+5. Volver
 
 User-facing messages in the console menu are fully localized in Spanish.
 
 ## Prerequisites
-
 - Java Development Kit (JDK) 17 or higher.
 - Apache Maven.
 - Apache NetBeans IDE or any Java-compatible IDE.
 
 ## How to Run
-
-1. Clone the repository and checkout the target branch.
+1. Clone the repository and checkout the target branch (e.g., `feature/exception-handling`).
 2. Open the project in Apache NetBeans as a Maven project.
 3. Locate the `Main.java` file inside `com.gamezone`.
 4. Run the file (Shift + F6 in NetBeans) to launch the interactive console system.
 
-From the command line, from the repository root:
-
+From the command line (repository root):
 ```bash
 mvn clean compile
 mvn exec:java
