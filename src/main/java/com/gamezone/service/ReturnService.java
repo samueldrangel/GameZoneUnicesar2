@@ -15,20 +15,23 @@ public class ReturnService {
     private final ProductService productService;
     private final AccessoryService accessoryService; // <-- Añadido
     private final List<Return> returns;
-
+    private WarrantyService warrantyService; // Añadido aquí
     /**
      * @param repository      the return repository
      * @param saleService     service used to find sales
      * @param productService  service used to restore product stock
      * @param accessoryService service used to restore accessory stock
      */
-    public ReturnService(ReturnRepository repository, SaleService saleService,
-                         ProductService productService, AccessoryService accessoryService) {
+
+
+    // Constructor completo actualizado
+    public ReturnService(ReturnRepository repository, SaleService saleService, ProductService productService, AccessoryService accessoryService, WarrantyService warrantyService, java.util.List<com.gamezone.model.Return> returns) {
         this.repository = repository;
         this.saleService = saleService;
         this.productService = productService;
-        this.accessoryService = accessoryService; // <-- Inicializado
-        this.returns = new ArrayList<>(repository.loadAll(saleService.listAllSales()));
+        this.accessoryService = accessoryService;
+        this.warrantyService = warrantyService;
+        this.returns = returns;
     }
 
     /**
