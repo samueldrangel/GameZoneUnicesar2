@@ -48,4 +48,4 @@ The activity recorded in the repository is associated below with the refactoring
 ## 4. Ruling and Action Plan
 1. **Product Persistence Refactoring:** Replace type checking in `ProductRepository` with polymorphic CSV mappers (`ProductCsvMapper`).
 2. **Collection Encapsulation:** Protect the `ProductService` catalog by preventing external mutations from `listAll()`.
-3. **Formatting Decoupling:** Clean up `Return` and `Warranty` entities by eliminating the generation of formatted strings for the UI.
+3. **Formatting Decoupling:** Clean up `Return` and `Warranty` entities by eliminating the generation of formatted strings for the UI. 

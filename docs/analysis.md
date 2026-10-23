@@ -279,3 +279,46 @@ One `try` with several `catch` blocks ordered from specific to general:
 generic catch would give one message for everything, and separate try blocks
 would repeat code. Placing the handler in one helper method keeps each menu
 option clean and the messages differentiated.
+
+# GRASP Analysis
+
+## 1. Criterion and minimum evidence (developer1)
+A fragment is a violation when the responsibility sits in a class that lacks the
+information or the role the pattern assigns, and we can name a foreseeable change
+that would force edits in several places. It is correct when the pattern's guiding
+question has a clear answer in the code, and not applicable when there is no
+collaboration point. Every verdict carries the class, the method, the fragment in
+the audited commit, a one-sentence explanation and, for violations, the concrete
+consequence under a foreseeable change, such as a fourth product type.
+
+## 2. Boundary findings (leader)
+V-01, V-04, V-06, V-08 and V-09 involve code of both members. For example, V-04:
+`Return` (developer1) reads the discount distribution from the internals of `Sale`
+(leader), and `Sale` offers no operation for it. Each was registered once in the
+consolidation, split by authorship using git blame, and the leader fixed the order
+of the commits: additive changes first, then the model, then services, then the ui.
+
+## 3. Overlapping patterns (developer1)
+`SaleService.registerSale` breaks Polymorphism (type conditionals), High Cohesion
+(eight responsibilities) and Protected Variations (the console warranty rule is
+repeated). To avoid duplicates it is registered as two violations that name the
+aspect, not the lines: V-01 for the type dispatch and V-02 for the structure. The
+guiding pattern is the root cause: Polymorphism for V-01 and High Cohesion for V-02,
+because fixing them also removes the Protected Variations symptom and moves steps
+to their information experts.
+
+## 4. Behavior preservation (leader)
+A scripted session covers all menu operations with fixed inputs over seed data and
+runs against develop before the first correction (reference). The output and the
+data files are normalized (dates, warranty ids) and compared with diff after each
+pull request on the affected operations, and at the end on all of them. The
+evidence is the identical before/after output, identical data files, a successful
+`mvn clean compile` and the manual total of the scripted sale (2,197,500).
+
+## 5. Order and coordination (leader)
+Violations are fixed from the inside out: additive abstractions, then the model,
+then services and persistence, then the ui, because each layer compiles only if the
+layer below already offers what it needs. Shared branch rules: each file has one
+owner per pull request, everyone runs `git pull --rebase` before each push, the
+model-only pull request of the developer is additive so develop always compiles,
+and the leader merges in the agreed order.
