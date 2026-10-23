@@ -116,14 +116,16 @@ public class Sale {
     /**
      * Calculates the final total.
      *
-     * @return the subtotal minus the applied discount plus extended warranty cost
+     * @return the subtotal minus the applied discount plus extended warranty
+     * cost
      */
     public double getTotalAmount() {
         return getSubtotal() - discountAmount + extendedWarrantyCost;
     }
 
     /**
-     * Builds the sale receipt with the subtotal, the discount, extended warranty cost, and final total.
+     * Builds the sale receipt with the subtotal, the discount, extended
+     * warranty cost, and final total.
      *
      * @return the receipt text, in Spanish
      */
@@ -153,9 +155,9 @@ public class Sale {
      * @return true if today is within 30 calendar days after the sale date
      */
     public boolean canBeReturned() {
-        return !LocalDate.now().isAfter(date.plusDays(30));
+        return !LocalDate.now().isAfter(date.plusDays(RETURN_WINDOW_DAYS));
     }
-    
+
     public int countOf(String productId) {
         int n = 0;
         for (Product p : items) {
