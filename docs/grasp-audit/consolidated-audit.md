@@ -1,34 +1,27 @@
-Below is a consolidated version adapted to the fact that the team consists of two members only, where the Technical Leader also acts as Developer 2. It is written as a final docs/grasp-audit/consolidated-audit.md document.
-
 # CONSOLIDATED GRASP AUDIT REPORT
 
-**Project:** GameZone Unicesar – Commercial Management and Inventory System
-
-**Organization:** Popular University of Cesar (UPC) – Faculty of Engineering and Technology
-
-**Repository:** https://github.com/samueldrangel/GameZoneUnicesar2
-
-**Audited Branch:** `develop`
-
-**Audited Commit:** `237669c74114f207ebd8e2dba84ecad0dcb6ebd7` (Merge PR #31)
-
-**Consolidated By:** Samuel David Rangel Martínez (Technical Leader / Developer 2)
-
-**Audit Date:** October 22, 2026
+**Project:** GameZone Unicesar – Commercial Management and Inventory System  
+**Organization:** Popular University of Cesar (UPC) – Faculty of Engineering and Technology  
+**Repository:** https://github.com/samueldrangel/GameZoneUnicesar2  
+**Branch:** `develop`  
+**Audited Commit:** `237669c74114f207ebd8e2dba84ecad0dcb6ebd7` (Merge PR #31)  
+**Date:** October 22, 2026  
+**Consolidated By:** Samuel David Rangel Martínez (`samueldrangel`) – Technical Leader / Developer 2
 
 ---
 
 # 1. Audit Scope
 
-This document consolidates the GRASP audits performed by all team members and serves as the official reference for Phase 2 corrections.
+This document consolidates all GRASP audits performed by the project team. It serves as the official reference for Phase 2 corrections and supersedes the individual audit reports.
 
 The consolidation process included:
 
-- Verification that every system class was audited exactly once.
-- Validation of the evidence supporting each finding.
-- Unification of duplicate or cross-boundary findings.
+- Coverage verification of all audited classes.
+- Validation of supporting evidence.
+- Consolidation of duplicated findings.
+- Identification of boundary findings affecting multiple modules.
 - Assignment of correction responsibilities.
-- Issuance of the final team verdict for each GRASP pattern.
+- Issuance of final team verdicts.
 
 ---
 
@@ -38,559 +31,892 @@ The consolidation process included:
 
 ✅ COMPLETE COVERAGE VERIFIED
 
-All classes and components identified in the system were audited by their respective owners.
+All classes owned by the two team members were audited exactly once.
 
-No class was audited more than once and no class was left unaudited.
+No class was omitted and no class was duplicated.
 
 ---
 
 ## Coverage Matrix
 
-| Module | Classes | Auditor |
+| Package | Classes | Auditor |
 |----------|----------|----------|
-| Products | Product, VideoGame, Console | Samuel Angulo |
-| Product Persistence | ProductRepository | Samuel Angulo |
-| Product Validation | ProductValidator | Samuel Angulo |
-| Accessories | Accessory, Controller, Cable, Memory, ConsoleCompatible | Samuel Angulo |
-| Promotions | Promotion, PercentageDiscount, CategoryDiscount, BulkPurchaseDiscount | Samuel Angulo |
-| Returns | Return | Samuel Angulo |
-| Warranties | Warranty, BasicWarranty, ExtendedWarranty | Samuel Angulo |
-| Exceptions | com.gamezone.exceptions.* | Samuel Angulo |
-| Sales | Sale, SaleDetail, SaleService | Samuel David Rangel Martínez |
-| Sales Persistence | SaleRepository | Samuel David Rangel Martínez |
-| People | Person, Customer, Seller, PersonService, PersonRepository | Samuel David Rangel Martínez |
-| User Interface | Menu, SubMenu, Main | Samuel David Rangel Martínez |
-| Warranty Integration | WarrantyService | Samuel David Rangel Martínez |
+| model | Product, VideoGame, Console | Samuel Angulo (Developer 1) |
+| model | Accessory, Controller, Cable, Memory, ConsoleCompatible | Samuel Angulo |
+| model | Promotion, PercentageDiscount, CategoryDiscount, BulkPurchaseDiscount | Samuel Angulo |
+| model | Return | Samuel Angulo |
+| model | Warranty, BasicWarranty, ExtendedWarranty | Samuel Angulo |
+| model | Person, Client, Seller | Samuel David Rangel Martínez |
+| model | Sale, SaleDetail | Samuel David Rangel Martínez |
+| validation | ProductValidator | Samuel Angulo |
+| validation | PersonValidator | Samuel David Rangel Martínez |
+| validation | AccessoryValidator, PromotionValidator, WarrantyValidator, SaleValidator | Samuel David Rangel Martínez |
+| persistence | ProductRepository | Samuel Angulo |
+| persistence | PersonRepository | Samuel David Rangel Martínez |
+| persistence | SaleRepository | Samuel David Rangel Martínez |
+| persistence | AccessoryRepository | Samuel David Rangel Martínez |
+| persistence | PromotionRepository | Samuel David Rangel Martínez |
+| persistence | ReturnRepository | Samuel David Rangel Martínez |
+| persistence | WarrantyRepository | Samuel David Rangel Martínez |
+| service | ProductService | Samuel Angulo |
+| service | PersonService | Samuel David Rangel Martínez |
+| service | SaleService | Samuel David Rangel Martínez |
+| service | AccessoryService | Samuel David Rangel Martínez |
+| service | PromotionService | Samuel David Rangel Martínez |
+| service | ReturnService | Samuel David Rangel Martínez |
+| service | WarrantyService | Samuel David Rangel Martínez |
+| ui | Menu, SubMenu | Samuel David Rangel Martínez |
+| root | Main | Samuel David Rangel Martínez |
+| exceptions | GameZoneException, BusinessRuleException, InvalidDataException, ResourceNotFoundException, PersistenceException | Shared Audit |
 
 ---
 
 # 3. Evidence Validation
 
-All reported findings were reviewed.
+All accepted findings contain:
 
-Every consolidated violation includes:
-
-- A clearly identified GRASP pattern.
-- Code-level evidence.
-- Technical explanation.
-- Architectural consequence.
+- Clear code-level evidence.
+- Exact class or method location.
+- Pattern classification.
+- Architectural justification.
 - Refactoring proposal.
-- Responsible developer.
 
-Duplicate findings affecting the same architectural problem were merged into a single violation.
+The Technical Leader reviewed all findings for consistency and removed duplicated reports describing the same architectural issue.
 
 ---
 
 # 4. Final Team Verdict by GRASP Pattern
 
-| GRASP Pattern | Team Verdict | Severity |
-|--------------|-------------|-----------|
-| Information Expert | VIOLATION | Moderate |
-| Creator | VIOLATION | Moderate |
-| Controller | COMPLIANT | None |
-| Low Coupling | VIOLATION | Critical |
-| High Cohesion | VIOLATION | Critical |
-| Polymorphism | VIOLATION | Critical |
-| Pure Fabrication | VIOLATION | Moderate |
-| Indirection | VIOLATION | Critical |
-| Protected Variations | VIOLATION | Critical |
+| # | GRASP Pattern | Final Verdict |
+|---|--------------|--------------|
+| 1 | Information Expert | Violation |
+| 2 | Creator | Violation |
+| 3 | Controller | Compliant |
+| 4 | Low Coupling | Violation |
+| 5 | High Cohesion | Violation |
+| 6 | Polymorphism | Violation |
+| 7 | Pure Fabrication | Violation |
+| 8 | Indirection | Violation |
+| 9 | Protected Variations | Violation |
 
 ---
 
-# 5. Consolidated Violations
+# 5. Definitive Violations List
 
-## V-01 — Monolithic User Interface Controller
+---
 
-### Pattern
+## V-01 — Catalog Lookup Performed by SaleService
 
-High Cohesion
+**Pattern:** Information Expert
 
-### Evidence
+**Evidence**
 
-`SubMenu.java` contains more than 600 lines of code and manages:
+```java
+productService.listAll().stream()
+...
+accessoryService.listAllAccessories().stream()
+```
 
-- Product operations
-- Accessory operations
-- Person management
-- Promotions
-- Returns
-- Warranties
-- Sales workflow
+**Location**
 
-### Explanation
+`SaleService.findProductOrAccessoryById()`
 
-The class accumulates unrelated responsibilities and violates High Cohesion.
+**Explanation**
 
-### Consequence
+SaleService performs catalog searches using complete catalog collections rather than delegating the responsibility to the services that own the data.
 
-- Difficult maintenance
-- Poor readability
-- Increased regression risk
+**Consequence**
 
-### Agreed Solution
+Search logic becomes duplicated and tightly coupled to catalog implementation details.
 
-Split the component into:
+**Agreed Solution**
 
-- ProductMenu
-- PersonMenu
-- SaleMenu
-- ReturnMenu
-- WarrantyMenu
+Introduce direct lookup methods:
 
-### Origin
+```java
+ProductService.findById()
+AccessoryService.findById()
+```
 
-Leader Audit – LEAD-V-01
+**Origin**
 
-### Responsible
+Leader Audit – LEAD-V-05
+
+**Responsible**
 
 Samuel David Rangel Martínez
 
 ---
 
-## V-02 — Monolithic Sales Processing Workflow
+## V-02 — Total Units Calculated Outside Sale
 
-### Pattern
+**Pattern:** Information Expert
 
-High Cohesion
-
-### Evidence
-
-`SaleService.processSale()` performs:
-
-1. Customer lookup
-2. Product lookup
-3. Validation
-4. Inventory checks
-5. Promotion calculations
-6. Warranty management
-7. Persistence
-8. Sales history updates
-
-### Explanation
-
-Multiple independent responsibilities are concentrated in a single method.
-
-### Consequence
-
-Difficult testing and reduced maintainability.
-
-### Agreed Solution
-
-Delegate responsibilities to:
-
-- InventoryCoordinator
-- PromotionService
-- WarrantyService
-
-### Origin
-
-Leader Audit – LEAD-V-04
-
-### Responsible
-
-Samuel David Rangel Martínez
-
----
-
-## V-03 — Type-Based Behavior Using instanceof
-
-### Pattern
-
-Polymorphism
-
-### Evidence
-
-Examples:
+**Evidence**
 
 ```java
-if(product instanceof Accessory)
+for (SaleDetail detail : sale.getDetails()) {
+    totalUnits += detail.getQuantity();
+}
 ```
+
+inside:
 
 ```java
-if(product instanceof Console)
+BulkPurchaseDiscount.calculateDiscount()
 ```
 
-and equivalent checks inside ProductRepository.
+**Explanation**
 
-### Explanation
+Sale owns its details and therefore should provide the total number of units sold.
 
-Business behavior is selected through explicit type checking rather than polymorphism.
+**Solution**
 
-### Consequence
+Add:
 
-Every new product type requires code modifications in multiple locations.
+```java
+Sale.getTotalUnits()
+```
 
-### Agreed Solution
+**Origin**
 
-Introduce:
+Developer 1 Audit – V-07
 
-- ProductCsvMapper hierarchy
-- ProductCategory abstraction
-- Product.supportsWarranty()
-
-### Origin
-
-Leader Audit LEAD-V-02
-Developer 1 Audit V-01
-Developer 1 Audit V-06
-
-### Responsible
+**Responsible**
 
 Samuel Angulo
 
+**Boundary Finding:** Yes
+
+---
+
+## V-03 — Discount Ratio Calculated in Multiple Locations
+
+**Pattern:** Information Expert
+
+**Location**
+
+Return refund calculations.
+
+**Explanation**
+
+Discount ratio logic is implemented repeatedly instead of being delegated to Sale.
+
+**Solution**
+
+Add:
+
+```java
+Sale.getDiscountRatio()
+```
+
+and reuse it from Return.
+
+**Origin**
+
+Developer 1 Audit – V-08
+
+**Responsible**
+
+Samuel Angulo
+
+**Boundary Finding:** Yes
+
+---
+
+## V-04 — Stock Validation Duplicated Outside Product
+
+**Pattern:** Information Expert
+
+**Evidence**
+
+```java
+if(product.getStock() < requestedQuantity)
+```
+
+inside ProductValidator.
+
+**Explanation**
+
+Product already owns stock information.
+
+**Solution**
+
+Add:
+
+```java
+Product.hasStockFor(quantity)
+```
+
+**Origin**
+
+Developer 1 Audit – V-11
+
+**Responsible**
+
+Samuel Angulo
+
+---
+
+## V-05 — Product Search in Sales Duplicated
+
+**Pattern:** Information Expert
+
+**Location**
+
+- ReturnService
+- ReturnRepository
+
+**Solution**
+
+Introduce:
+
+```java
+Sale.findProductById()
+```
+
+**Origin**
+
+Developer 2 Findings
+
+**Responsible**
+
 Samuel David Rangel Martínez
 
 ---
 
-## V-04 — Direct Dependency on Concrete Repositories
+## V-06 — Warranty Expiration Rule Outside Warranty
 
-### Pattern
+**Pattern:** Information Expert
 
-Low Coupling / Indirection
+**Explanation**
 
-### Evidence
+WarrantyService evaluates expiration dates directly.
 
-Examples:
+**Solution**
+
+Introduce:
 
 ```java
-private final SaleRepository repository;
+Warranty.expiresBetween()
 ```
+
+**Origin**
+
+Developer 2 Findings
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-07 — SaleDetail Created Directly by UI
+
+**Pattern:** Creator
+
+**Evidence**
+
+```java
+items.add(new SaleDetail(...))
+```
+
+inside:
+
+```java
+SubMenu.processSaleForm()
+```
+
+**Explanation**
+
+Sale aggregates SaleDetail and should therefore create it.
+
+**Consequence**
+
+UI becomes coupled to SaleDetail construction logic.
+
+**Solution**
+
+Create:
+
+```java
+Sale.addItem(Product, int)
+```
+
+**Origin**
+
+Leader Audit
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-08 — Menu Receives Services It Does Not Use
+
+**Pattern:** Low Coupling
+
+**Evidence**
+
+Menu receives seven services only to forward them.
+
+**Solution**
+
+Instantiate specialized menus from Main.
+
+**Origin**
+
+Leader Audit LEAD-V-07
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-09 — Unused Promotions Parameter
+
+**Pattern:** Low Coupling
+
+**Evidence**
+
+```java
+loadAll(... promotions)
+```
+
+parameter unused.
+
+**Solution**
+
+Remove obsolete parameter.
+
+**Origin**
+
+Leader Audit LEAD-V-08
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-10 — WarrantyRepository Depends on Multiple Repositories
+
+**Pattern:** Low Coupling
+
+**Explanation**
+
+WarrantyRepository orchestrates loading through several repository dependencies.
+
+**Solution**
+
+Pass loaded domain objects instead of repositories.
+
+**Origin**
+
+Developer 2 Findings
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-11 — Concrete Repository Dependencies in Services
+
+**Pattern:** Indirection
+
+**Evidence**
 
 ```java
 private final ProductRepository repository;
+private final SaleRepository repository;
 ```
 
-### Explanation
+and equivalent service dependencies.
 
-Services depend directly on CSV persistence implementations.
+**Explanation**
 
-### Consequence
+Business services depend directly on CSV implementations.
 
-- Difficult unit testing
-- Tight persistence coupling
-- Reduced extensibility
+**Solution**
 
-### Agreed Solution
-
-Introduce interfaces:
+Introduce:
 
 - ProductStorage
 - SaleStorage
 - PersonStorage
 
-and inject abstractions.
+and equivalent abstractions.
 
-### Origin
+**Origin**
 
-Leader Audit LEAD-V-03
+Leader Audit LEAD-V-03  
 Developer 1 Audit V-02
 
-### Responsible
+**Responsible**
 
-Samuel Angulo
+Samuel Angulo and Samuel David Rangel Martínez
+
+---
+
+## V-12 — Monolithic User Interface
+
+**Pattern:** High Cohesion
+
+**Evidence**
+
+`SubMenu.java` exceeds 600 lines and handles all application modules.
+
+**Solution**
+
+Split into specialized menus:
+
+- ProductMenu
+- SaleMenu
+- PersonMenu
+- ReturnMenu
+- WarrantyMenu
+
+**Origin**
+
+Leader Audit LEAD-V-01
+
+**Responsible**
+
 Samuel David Rangel Martínez
 
 ---
 
-## V-05 — Weak Protected Variation Mechanisms
+## V-13 — Monolithic Sale Processing Logic
 
-### Pattern
+**Pattern:** High Cohesion
 
-Protected Variations
-
-### Evidence
-
-- Mutable collections exposed by services.
-- Repeated compatibility logic.
-- Repeated promotion validation logic.
-- Product-type branching.
-
-### Explanation
-
-Variation points are implemented through duplication rather than abstraction.
-
-### Consequence
-
-Small changes require modifications in multiple classes.
-
-### Agreed Solution
-
-Introduce:
-
-- Collections encapsulation
-- CompatibleAccessory abstraction
-- PercentageBasedPromotion abstraction
-- Storage interfaces
-
-### Origin
-
-Developer 1 Audit V-03
-Developer 1 Audit V-04
-Developer 1 Audit V-05
-Leader Audit LEAD-V-02
-Leader Audit LEAD-V-03
-
-### Responsible
-
-Samuel Angulo
-Samuel David Rangel Martínez
-
----
-
-## V-06 — Information Ownership Violations
-
-### Pattern
-
-Information Expert
-
-### Evidence
-
-Examples:
+**Location**
 
 ```java
-productService.listAll()
-    .stream()
+SaleService.processSale()
 ```
 
-Manual searching in SaleService.
+**Explanation**
 
-Discount and quantity calculations performed externally to Sale.
+The method performs validation, inventory management, promotions, warranties, persistence and updates.
 
-Inventory validation performed externally to Product.
+**Solution**
 
-### Explanation
+Delegate responsibilities to specialized services.
 
-Responsibilities are not assigned to the objects that own the required information.
+**Origin**
 
-### Consequence
+Leader Audit LEAD-V-04
 
-Business rules become scattered across the system.
+**Responsible**
 
-### Agreed Solution
-
-Introduce:
-
-- Product.hasStockFor()
-- Sale.getTotalUnits()
-- Sale.getDiscountRatio()
-- ProductService.findById()
-
-### Origin
-
-Leader Audit LEAD-V-05
-Developer 1 Audit V-07
-Developer 1 Audit V-08
-Developer 1 Audit V-11
-
-### Responsible
-
-Samuel Angulo
 Samuel David Rangel Martínez
 
 ---
 
-## V-07 — Missing Pure Fabrication Components
+## V-14 — Receipt Formatting Inside Sale
 
-### Pattern
+**Pattern:** High Cohesion / Pure Fabrication
 
-Pure Fabrication
-
-### Evidence
-
-Console input handling is duplicated.
-
-Domain entities generate UI formatting output.
-
-### Explanation
-
-Cross-cutting responsibilities are embedded inside unrelated classes.
-
-### Consequence
-
-Reduced reuse and cohesion.
-
-### Agreed Solution
+**Solution**
 
 Create:
 
-- ConsoleInput
-- ReturnReceiptFormatter
-- WarrantyCertificateFormatter
-
-### Origin
-
-Leader Audit LEAD-V-06
-Developer 1 Audit V-09
-Developer 1 Audit V-10
-
-### Responsible
-
-Samuel Angulo
-Samuel David Rangel Martínez
-
----
-
-## V-08 — Dependency Forwarding Anti-Pattern
-
-### Pattern
-
-Low Coupling
-
-### Evidence
-
-`Menu` receives numerous services solely to pass them into `SubMenu`.
-
-### Explanation
-
-The class acts as a dependency relay without using the services.
-
-### Consequence
-
-Unnecessary coupling between UI components.
-
-### Agreed Solution
-
-Instantiate specialized menus directly in `Main`.
-
-### Origin
-
-Leader Audit LEAD-V-07
-
-### Responsible
-
-Samuel David Rangel Martínez
-
----
-
-## V-09 — Obsolete Persistence Parameter
-
-### Pattern
-
-Low Coupling
-
-### Evidence
-
 ```java
-loadAll(..., promotions)
+SaleReceiptFormatter
 ```
 
-The parameter is never used.
+**Origin**
 
-### Explanation
+Leader Findings
 
-The method signature contains unnecessary dependencies.
-
-### Consequence
-
-Increased coupling and maintenance overhead.
-
-### Agreed Solution
-
-Remove the obsolete parameter and update all callers.
-
-### Origin
-
-Leader Audit LEAD-V-08
-
-### Responsible
+**Responsible**
 
 Samuel David Rangel Martínez
 
 ---
 
-# 6. Cross-Boundary Findings
+## V-15 — Receipt Formatting Inside Return
 
-## BF-01 — Persistence Layer Coupling
+**Pattern:** High Cohesion / Pure Fabrication
 
-### Involved Components
+**Solution**
 
-Developer 1
+Create:
 
-- ProductRepository
-- ProductService
+```java
+ReturnReceiptFormatter
+```
 
-Developer 2 / Technical Leader
+**Origin**
 
-- SaleRepository
-- SaleService
-- PersonRepository
-- PersonService
+Developer 1 Audit V-09
 
-### Shared Problem
+**Responsible**
 
-Direct dependence on concrete CSV repositories.
-
-### Correction Distribution
-
-Samuel Angulo:
-
-- ProductStorage abstraction.
-
-Samuel David Rangel Martínez:
-
-- SaleStorage abstraction.
-- PersonStorage abstraction.
+Samuel Angulo
 
 ---
 
-## BF-02 — Product-Type Branching
+## V-16 — Certificate Formatting Inside Warranty
 
-### Involved Components
+**Pattern:** High Cohesion / Pure Fabrication
 
-Developer 1
+**Solution**
 
-- Product hierarchy
-- ProductRepository
+Create:
 
-Developer 2 / Technical Leader
+```java
+WarrantyCertificateFormatter
+```
+
+**Origin**
+
+Developer 1 Audit V-10
+
+**Responsible**
+
+Samuel Angulo
+
+---
+
+## V-17 — Financial Reporting Inside ReturnService
+
+**Pattern:** High Cohesion
+
+**Solution**
+
+Extract:
+
+```java
+MonthlyBalanceService
+```
+
+**Origin**
+
+Developer 2 Findings
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-18 — Type Checks Using instanceof
+
+**Pattern:** Polymorphism
+
+**Evidence**
+
+```java
+if(product instanceof Console)
+```
+
+```java
+if(product instanceof Accessory)
+```
+
+**Locations**
 
 - SaleService
-- WarrantyService integration
+- SubMenu
 
-### Shared Problem
+**Solution**
 
-Business logic depends on explicit type evaluation.
+Move behavior into Product hierarchy.
 
-### Correction Distribution
+**Origin**
 
-Samuel Angulo:
+Leader Audit LEAD-V-02
 
-- Product abstraction hierarchy.
-- CSV mapper hierarchy.
+**Responsible**
 
-Samuel David Rangel Martínez:
+Samuel David Rangel Martínez / Samuel Angulo
 
-- InventoryCoordinator.
-- Warranty delegation refactoring.
+---
+
+## V-19 — Category Selection Using instanceof
+
+**Pattern:** Polymorphism
+
+**Location**
+
+CategoryDiscount
+
+**Solution**
+
+Implement:
+
+```java
+ProductCategory
+Product.getCategory()
+```
+
+**Origin**
+
+Developer 1 Audit V-06
+
+**Responsible**
+
+Samuel Angulo
+
+---
+
+## V-20 — Accessory Type Matching Using instanceof
+
+**Pattern:** Polymorphism
+
+**Location**
+
+AccessoryService
+
+**Solution**
+
+Implement:
+
+```java
+Accessory.getAccessoryKind()
+```
+
+**Origin**
+
+Developer 2 Findings
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-21 — ProductRepository Type Conditionals
+
+**Pattern:** Polymorphism
+
+**Solution**
+
+Introduce:
+
+```java
+ProductCsvMapper
+ConsoleCsvMapper
+VideoGameCsvMapper
+```
+
+**Origin**
+
+Developer 1 Audit V-01
+
+**Responsible**
+
+Samuel Angulo
+
+---
+
+## V-22 — AccessoryRepository Type Conditionals
+
+**Pattern:** Polymorphism
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-23 — PromotionRepository Type Conditionals
+
+**Pattern:** Polymorphism
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-24 — WarrantyRepository Type Conditionals
+
+**Pattern:** Polymorphism
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-25 — Duplicated Console Input Logic
+
+**Pattern:** Pure Fabrication
+
+**Evidence**
+
+Duplicated `readInt()` and `readDouble()` methods.
+
+**Solution**
+
+Create:
+
+```java
+ConsoleInput
+```
+
+**Origin**
+
+Leader Audit LEAD-V-06
+
+**Responsible**
+
+Samuel David Rangel Martínez
+
+---
+
+## V-26 — Duplicated CSV Infrastructure
+
+**Pattern:** Pure Fabrication
+
+**Explanation**
+
+File reading and writing responsibilities are repeated across repositories.
+
+**Solution**
+
+Centralize reusable functionality within:
+
+```java
+CsvSupport
+```
+
+**Origin**
+
+Consolidated Repository Findings
+
+**Responsible**
+
+Shared Responsibility
+
+---
+
+## V-27 — Product Catalog Exposure
+
+**Pattern:** Protected Variations
+
+**Evidence**
+
+```java
+return products;
+```
+
+inside ProductService.
+
+**Solution**
+
+Return:
+
+```java
+Collections.unmodifiableList(products);
+```
+
+**Origin**
+
+Developer 1 Audit V-03
+
+**Responsible**
+
+Samuel Angulo
+
+---
+
+## V-28 — Console Compatibility Logic Duplicated
+
+**Pattern:** Protected Variations
+
+**Solution**
+
+Create:
+
+```java
+CompatibleAccessory
+```
+
+**Origin**
+
+Developer 1 Audit V-04
+
+**Responsible**
+
+Samuel Angulo
+
+---
+
+## V-29 — Percentage Validation Logic Duplicated
+
+**Pattern:** Protected Variations
+
+**Solution**
+
+Create:
+
+```java
+PercentageBasedPromotion
+```
+
+**Origin**
+
+Developer 1 Audit V-05
+
+**Responsible**
+
+Samuel Angulo
+
+---
+
+# 6. Boundary Findings
+
+The following findings involve code owned by both team members and therefore require coordinated implementation.
+
+| ID | Shared Module | Coordination |
+|----|--------------|--------------|
+| V-02 | Sale / Promotions | Leader adds Sale.getTotalUnits(), Developer 1 consumes it |
+| V-03 | Sale / Return | Leader adds Sale.getDiscountRatio(), Developer 1 consumes it |
+| V-05 | Sale / Return | Leader adds Sale.findProductById(), Developer 2 uses it |
+| V-06 | Warranty / WarrantyService | Developer 1 adds method, Developer 2 uses it |
+| V-11 | Services / Repositories | Both developers introduce persistence abstractions |
+| V-18 | Product hierarchy / SaleService | Product abstractions supplied by Developer 1, consumed by Leader |
 
 ---
 
 # 7. Out-of-Scope Findings
 
-The audit identified functional concerns that are not GRASP violations and therefore are excluded from Phase 2 architectural corrections:
+The following functional defects were discovered during the audit but are not GRASP violations and therefore are excluded from Requirement 7 correction scope:
 
-- Limited automated integration tests.
-- Limited automated regression testing.
-- Scalability limitations of CSV-based persistence.
-- Inconsistent error messages among modules.
-
-These items should be handled through separate maintenance activities.
+- Failed-sale rollback leaves inconsistent memory state.
+- PersistenceException hierarchy inconsistency.
+- Silent input parsing failures.
+- Missing exception handling for some runtime failures.
+- Application startup fails when CSV files are corrupted.
+- Sales persisted with incorrect total value.
+- Sale receipts generated but never shown to users.
+- Stock restoration may desynchronize memory and persistence.
+- Returns always restore one unit regardless of quantity sold.
+- Some services use generic exceptions instead of typed exceptions.
+- Persistence folders are not automatically created in all scenarios.
+- Refund calculations use the current product price instead of the sale price.
+- Inconsistent validation behavior between entities and validators.
 
 ---
 
-# Final Consolidated Verdict
+# Final Team Verdict
 
-The system demonstrates appropriate application of the **Controller** pattern and a generally organized modular structure.
+The GameZone Unicesar system demonstrates correct application of the **Controller** pattern but presents significant architectural debt in the areas of:
 
-However, significant architectural debt remains in the areas of:
-
+- Information Expert
+- Creator
 - Low Coupling
 - High Cohesion
 - Polymorphism
+- Pure Fabrication
 - Indirection
 - Protected Variations
 
-The team must address the nine consolidated violations defined in this document. This report constitutes the official baseline for Phase 2 implementation and verification activities.
-
-
-This version is aligned with the requirement that the team consists of only two members and that the Technical Leader also acts as Developer 2, producing a definitive consolidated audit rather than a provisional one.
+A total of **29 consolidated violations** were identified and approved by the Technical Leader. These violations constitute the official Phase 2 correction baseline and must be addressed according to the responsibilities and implementation order defined in this document.
