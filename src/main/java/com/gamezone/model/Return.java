@@ -40,14 +40,8 @@ public class Return {
     public double getWarrantyRefund() { return warrantyRefund; }
     public double getRefundAmount() { return refundAmount; }
 
-    private double discountRatio() {
-        double subtotal = sale.getSubtotal();
-        return subtotal > 0 ? sale.getDiscountAmount() / subtotal : 0;
-    }
 
-    private double itemRefund(Product p) {
-        return p.getPrice() * (1 - discountRatio());
-    }
+    private double itemRefund(Product p) { return sale.getNetPrice(p); }
 
     /**
      * Sums the proportional refund of each item plus the warranty refund.

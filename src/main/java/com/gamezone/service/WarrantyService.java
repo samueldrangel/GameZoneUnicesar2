@@ -128,4 +128,49 @@ public class WarrantyService {
         repository.saveAll(warranties);
         return refundable;
     }
+    
+    /** Creates a factory for one warranty type. */
+    @FunctionalInterface
+    public interface WarrantyFactory {
+
+        Warranty create(String id, Product product, Sale sale, LocalDate start);
+    }
+
+    private static final Map<String, WarrantyFactory> FACTORIES
+            = Map.of("BASIC", BasicWarranty::new, "EXTENDED", ExtendedWarranty::new);
+
+    public WarrantyService(WarrantyRepository repository, SaleCatalog catalog, List<Product> products) {
+        this.repository = repository;
+        Map<String, Product> productsById = new HashMap<>();
+        for (Product p : products) {
+            productsById.put(p.getId(), p);
+        }
+        for (String[] row : repository.loadRows()) {
+            Sale sale = catalog.findById(row[2]);
+            Product product = productsById.get(row[3]);
+            WarrantyFactory factory = FACTORIES.get(row[0]);
+            if (sale == null || product == null || factory == null) {
+                continue;
+            }
+            warranties.add(factory.create(row[1], product, sale, LocalDate.parse(row[4])));
+        }
+    }
+
+    /**
+     * Issues the basic warranty of each console and the requested extended
+     * ones. @return the extended cost
+     */
+    public double issueWarrantiesFor(Sale sale, List<String> extendedIds) {
+        double extendedCost = 0;
+        for (Product item : sale.getItems()) {
+            if (item.supportsWarranty()) {
+                assignBasicWarranty(item, sale, sale.getDate());
+                if (extendedIds != null && extendedIds.contains(item.getId())) {
+                    extendedCost += assignExtendedWarranty(item, sale, sale.getDate()).getAdditionalCost();
+                }
+            }
+        }
+        return extendedCost;
+    }
+// WarrantyRepository.saveAll escribe w.getTypeCode() en vez de decidir con instanceof (V-08).
 }

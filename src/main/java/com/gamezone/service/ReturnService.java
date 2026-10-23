@@ -1,7 +1,5 @@
 package com.gamezone.service;
 
-import com.gamezone.model.Accessory;
-import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
@@ -15,53 +13,42 @@ import java.util.*;
 public class ReturnService {
 
     private final ReturnRepository repository;
-    private final SaleService saleService;
-    private final ProductService productService;
-    private final AccessoryService accessoryService; // <-- Añadido
+    private final SaleCatalog catalog;
+    private final InventoryCoordinator inventory;
+    private final WarrantyService warrantyService;
     private final List<Return> returns;
-    private WarrantyService warrantyService; // Añadido aquí
 
     /**
      * @param repository the return repository
-     * @param saleService service used to find sales
-     * @param productService service used to restore product stock
-     * @param accessoryService service used to restore accessory stock
+     * @param catalog sale catalog
+     * @param inventory inventory coordinator
+     * @param warrantyService warranty service
      */
-
-    // Constructor completo actualizado
-    public ReturnService(ReturnRepository repository, 
-                         SaleService saleService, 
-                         ProductService productService, 
-                         AccessoryService accessoryService, 
-                         WarrantyService warrantyService, 
-                         List<Return> returns) {
+    public ReturnService(ReturnRepository repository, SaleCatalog catalog, 
+                         InventoryCoordinator inventory, WarrantyService warrantyService) {
         this.repository = repository;
-        this.saleService = saleService;
-        this.productService = productService;
-        this.accessoryService = accessoryService;
+        this.catalog = catalog;
+        this.inventory = inventory;
         this.warrantyService = warrantyService;
-        this.returns = returns;
+        this.returns = new ArrayList<>(repository.loadAll(catalog.listAll()));
     }
 
     /**
      * Registers a return after validating existence, deadline and ownership.
      *
      * @param saleId original sale id
-     * @param productIds ids of the returned products (repeat an id for several
-     * units)
+     * @param productIds ids of the returned products
      * @param reason return reason
      * @return the registered return
-     * @throws IllegalArgumentException with a Spanish message if a validation
-     * fails
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
-        Sale sale = saleService.findSaleById(saleId);
+        Sale sale = catalog.findById(saleId);
         if (sale == null) {
             throw new IllegalArgumentException("La venta " + saleId + " no existe.");
         }
         if (!sale.canBeReturned()) {
             throw new IllegalArgumentException(
-                    "No se puede registrar la devolución: han pasado más de 30 días desde la venta.");
+                    "No se puede registrar la devolución: han pasado más de " + Sale.RETURN_WINDOW_DAYS + " días desde la venta.");
         }
         if (productIds == null || productIds.isEmpty()) {
             throw new IllegalArgumentException("Debe indicar al menos un producto a devolver.");
@@ -70,12 +57,6 @@ public class ReturnService {
             throw new IllegalArgumentException("Debe indicar el motivo de la devolución.");
         }
 
-        Map<String, Product> soldById = new HashMap<>();
-        Map<String, Integer> soldCount = new HashMap<>();
-        for (Product p : sale.getItems()) {
-            soldById.putIfAbsent(p.getId(), p);
-            soldCount.merge(p.getId(), 1, Integer::sum);
-        }
         Map<String, Integer> alreadyReturned = countReturned(saleId);
         Map<String, Integer> requested = new LinkedHashMap<>();
         for (String id : productIds) {
@@ -83,45 +64,34 @@ public class ReturnService {
         }
 
         List<Product> toReturn = new ArrayList<>();
+        double warrantyRefund = 0;
+
         for (Map.Entry<String, Integer> e : requested.entrySet()) {
             String id = e.getKey();
-            if (!soldById.containsKey(id)) {
+            Product sold = sale.findItem(id);
+            if (sold == null) {
                 throw new IllegalArgumentException(
                         "El producto " + id + " no pertenece a la venta " + saleId + ".");
             }
-            int available = soldCount.get(id) - alreadyReturned.getOrDefault(id, 0);
+            int available = sale.countOf(id) - alreadyReturned.getOrDefault(id, 0);
             if (e.getValue() > available) {
                 throw new IllegalArgumentException(
                         "El producto " + id + " ya fue devuelto o excede la cantidad comprada.");
             }
+            
             for (int i = 0; i < e.getValue(); i++) {
-                toReturn.add(soldById.get(id));
+                toReturn.add(sold);
             }
-        }
 
-        double warrantyRefund = 0;
-        for (String id : requested.keySet()) {
-            if (soldById.get(id) instanceof Console) {
+            // Stock and warranty restoration using inventory coordinator and product methods
+            inventory.restoreStock(sold, e.getValue());
+            if (sold.supportsWarranty()) {
                 warrantyRefund += warrantyService.cancelWarranties(id, saleId);
             }
         }
 
-// Asegúrate de pasar 'warrantyRefund' al constructor del objeto Return:
         Return r = new Return("RET-" + (returns.size() + 1), LocalDate.now(), sale,
                 toReturn, reason.trim().replace(',', ' '), warrantyRefund);
-
-        // Restauración de stock diferenciada entre accesorios y productos generales
-        for (Map.Entry<String, Integer> e : requested.entrySet()) {
-            String productId = e.getKey();
-            int quantity = e.getValue();
-
-            Product product = soldById.get(productId);
-            if (product instanceof Accessory) {
-                accessoryService.restoreStock(productId, quantity);
-            } else {
-                productService.restoreStock(productId, quantity);
-            }
-        }
 
         returns.add(r);
         repository.saveAll(returns);
@@ -164,9 +134,9 @@ public class ReturnService {
     public double calculateMonthlySales(int month, int year) {
         checkMonth(month);
         double total = 0;
-        for (Sale s : saleService.listAllSales()) {
+        for (Sale s : catalog.listAll()) {
             if (s.getDate().getMonthValue() == month && s.getDate().getYear() == year) {
-                total += s.getTotalAmount();   // final total, with discount and extended warranties
+                total += s.getTotalAmount();
             }
         }
         return total;
@@ -189,7 +159,6 @@ public class ReturnService {
      * @param month month from 1 to 12
      * @param year year
      * @return the net balance
-     * @throws IllegalArgumentException if the month is invalid
      */
     public double generateMonthlyBalance(int month, int year) {
         return calculateMonthlySales(month, year) - calculateMonthlyReturns(month, year);

@@ -17,4 +17,9 @@ public class ExtendedWarranty extends Warranty {
 
     @Override
     public double getAdditionalCost() { return getProduct().getPrice() * 0.10; }
+
+    @Override
+    public String getTypeCode() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

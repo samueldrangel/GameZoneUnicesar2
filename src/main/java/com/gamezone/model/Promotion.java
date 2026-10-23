@@ -50,4 +50,6 @@ public abstract class Promotion {
      * @return the discount amount in pesos (0 if the promotion does not apply)
      */
     public abstract double calculateDiscount(Sale sale);
+    
+    public abstract String getTypeCode();
 }

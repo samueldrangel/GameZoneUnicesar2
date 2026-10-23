@@ -23,4 +23,6 @@ public abstract class Accessory extends Product {
 
     @Override
     public abstract String getDescription();
+    
+    public abstract String getTypeCode();
 }

@@ -54,18 +54,12 @@ public class CategoryDiscount extends Promotion {
     }
 
     private boolean belongsToTargetCategory(Product item) {
-        if (targetCategory == null) {
-            return false;
-        }
-        switch (targetCategory) {
-            case "VIDEOGAME":
-                return item instanceof VideoGame;
-            case "CONSOLE":
-                return item instanceof Console;
-            case "ACCESSORY":
-                return item instanceof Accessory;
-            default:
-                return false;
-        }
+        return item.getCategory().name().equals(targetCategory);
     }
+
+    @Override
+    public String getTypeCode() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 }

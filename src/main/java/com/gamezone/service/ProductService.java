@@ -6,7 +6,7 @@ import exceptions.BusinessRuleException;
 import java.util.List;
 import validation.ProductValidator;
 
-public class ProductService {
+public class ProductService implements InventoryService {
 
     private ProductRepository repository;
     private List<Product> products;
@@ -88,5 +88,10 @@ public class ProductService {
             return false;
         }
         return updateStock(productId, quantity);
+    }
+
+    
+    public boolean handles(Product item) {
+        return item.getCategory() != ProductCategory.ACCESSORY;
     }
 }

@@ -18,6 +18,7 @@ public class Sale {
     private String appliedPromotionName;
     private double discountAmount;
     private double extendedWarrantyCost;
+    public static final int RETURN_WINDOW_DAYS = 30;
 
     /**
      * Creates a sale without discount.
@@ -115,14 +116,16 @@ public class Sale {
     /**
      * Calculates the final total.
      *
-     * @return the subtotal minus the applied discount plus extended warranty cost
+     * @return the subtotal minus the applied discount plus extended warranty
+     * cost
      */
     public double getTotalAmount() {
         return getSubtotal() - discountAmount + extendedWarrantyCost;
     }
 
     /**
-     * Builds the sale receipt with the subtotal, the discount, extended warranty cost, and final total.
+     * Builds the sale receipt with the subtotal, the discount, extended
+     * warranty cost, and final total.
      *
      * @return the receipt text, in Spanish
      */
@@ -152,6 +155,38 @@ public class Sale {
      * @return true if today is within 30 calendar days after the sale date
      */
     public boolean canBeReturned() {
-        return !LocalDate.now().isAfter(date.plusDays(30));
+        return !LocalDate.now().isAfter(date.plusDays(RETURN_WINDOW_DAYS));
+    }
+
+    public int countOf(String productId) {
+        int n = 0;
+        for (Product p : items) {
+            if (p.getId().equals(productId)) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    /**
+     * @return the first sold item with that id, or null
+     */
+    public Product findItem(String productId) {
+        for (Product p : items) {
+            if (p.getId().equals(productId)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return the price of the item after its proportional share of the
+     * discount
+     */
+    public double getNetPrice(Product p) {
+        double subtotal = getSubtotal();
+        double ratio = subtotal > 0 ? discountAmount / subtotal : 0;
+        return p.getPrice() * (1 - ratio);
     }
 }

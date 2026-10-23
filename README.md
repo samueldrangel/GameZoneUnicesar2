@@ -29,17 +29,17 @@ The system manages video games, consoles, and gaming accessories (controllers, c
 - **Robust Exception & Validation Layer**:
   - Standardized custom exception handling via `PersistenceException` (wrapping low-level I/O errors) and `BusinessRuleException`.
   - Centralized validation rules delegated to dedicated validators (`ProductValidator`, `PersonValidator`, `SaleValidator`).
-  - Differentiated error handling helper integrated into `ConsoleMenu` for safe user interaction and graceful error recovery.
+  - Differentiated error handling helper integrated into the UI architecture for safe user interaction and graceful error recovery.
 - **Persistence**: all information is stored in CSV files, protected by custom exception context, and loaded automatically when the application starts.
 
 ## Architecture & Package Structure
-The project follows a standard Maven layered structure (`com.gamezone`):
-- **`com.gamezone.model`**: Domain classes (`Person`, `Product`, `Accessory`, `Promotion`, `Sale`, `Return`, `Warranty`, and their respective subclasses). Inheritance and polymorphism are applied through overridden methods.
+The project follows a modular Maven layered structure (`com.gamezone`) incorporating clean architecture and GRASP principles:
+- **`com.gamezone.model`**: Domain classes (`Person`, `Product`, `Accessory`, `Promotion`, `Sale`, `Return`, `Warranty`, and `InventoryService` interface). Inheritance and polymorphism are applied through overridden methods.
 - **`com.gamezone.persistence`**: File-based reading and writing of data (`ProductRepository`, `AccessoryRepository`, `PersonRepository`, `SaleRepository`, `PromotionRepository`, `ReturnRepository`, `WarrantyRepository`). Standard `IOException` handling is wrapped into custom `PersistenceException` to provide enhanced error context.
-- **`com.gamezone.service`**: Business rules, validation delegation, and data coordination (`ProductService`, `AccessoryService`, `PersonService`, `SaleService`, `PromotionService`, `ReturnService`, `WarrantyService`).
+- **`com.gamezone.service`**: Business rules, validation delegation, inventory coordination via `InventoryCoordinator`, and catalog management via `SaleCatalog` (`ProductService`, `AccessoryService`, `PersonService`, `SaleService`, `PromotionService`, `ReturnService`, `WarrantyService`, `InventoryCoordinator`, `SaleCatalog`).
 - **`com.gamezone.validator`**: Specialized validation components enforcing business and data integrity rules (`ProductValidator`, `PersonValidator`, `SaleValidator`).
 - **`com.gamezone.exceptions`**: Custom runtime exceptions (`PersistenceException`, `BusinessRuleException`).
-- **`com.gamezone.ui`**: Command-line interactive menu interface (`ConsoleMenu`) featuring a unified error-handling helper routing user operations securely.
+- **`com.gamezone.ui`**: Command-line interactive menu interface split into a central orchestrator (`ConsoleUI`) and dedicated sub-menu components (`ProductMenu`, `AccessoryMenu`, `PersonMenu`, `SaleMenu`, `PromotionMenu`, `WarrantyMenu`, `ReturnMenu`), powered by helper classes (`ConsoleInput`, `ConsolePrinter`).
 - **`com.gamezone`**: Application entry point (`Main`).
 
 Dependencies between layers follow one direction: `ui → service → persistence → model`.
@@ -65,27 +65,29 @@ The `data/` folder contains CSV files used for persistence:
 If a file does not exist, the system starts with an empty list. Run the application from the repository root so the relative `data/` path resolves correctly.
 
 ## Menu Options
-### Main Menu
-1. List all products and accessories
-2. Add VideoGame
-3. Add Console
-4. Register Controller (Accessory)
-5. Register Cable (Accessory)
-6. Register Memory (Accessory)
-7. List Persons (Customers & Sellers)
-8. Add Customer
-9. Add Seller
-10. List Sales
-11. Register New Sale (Multi-item & Extended Warranty Option)
-12. List Active Promotions
-13. Register Percentage Discount
-14. Register Category Discount
-15. Register Bulk Purchase Discount
-16. Gestión de devoluciones (Returns Submenu)
-17. Gestión de garantías (Warranty Submenu)
-18. Exit
+### Main Menu (ConsoleUI)
+1. Productos (Product Submenu)
+2. Accesorios (Accessory Submenu)
+3. Personas (Person Submenu)
+4. Ventas (Sale Submenu)
+5. Promociones (Promotion Submenu)
+6. Garantías (Warranty Submenu)
+7. Devoluciones (Return Submenu)
+8. Salir
 
-### Returns Submenu (Option 16)
+### Product Submenu (Option 1)
+1. Listar inventario de productos y accesorios
+2. Registrar Videojuego
+3. Registrar Consola
+4. Volver
+
+### Accessory Submenu (Option 2)
+1. Registrar control
+2. Registrar cable
+3. Registrar memoria
+4. Volver
+
+### Returns Submenu (Option 7)
 1. Registrar una nueva devolución
 2. Consultar todas las devoluciones
 3. Consultar devoluciones por cliente
@@ -93,7 +95,7 @@ If a file does not exist, the system starts with an empty list. Run the applicat
 5. Consultar balance mensual
 6. Volver
 
-### Warranty Submenu (Option 17)
+### Warranty Submenu (Option 6)
 1. Consultar garantía de un producto en una venta
 2. Listar todas las garantías
 3. Listar garantías vigentes
@@ -108,10 +110,10 @@ User-facing messages in the console menu are fully localized in Spanish.
 - Apache NetBeans IDE or any Java-compatible IDE.
 
 ## How to Run
-1. Clone the repository and checkout the target branch (e.g., `feature/exception-handling`).
+1. Clone the repository and checkout the target branch (e.g., `feature/grasp-audit`).
 2. Open the project in Apache NetBeans as a Maven project.
-3. Locate the `Main.java` file inside `com.gamezone`.
-4. Run the file (Shift + F6 in NetBeans) to launch the interactive console system.
+3. Locate the `Main.java` file inside `com.gamezone.ui`.
+4. Run the file to launch the interactive console system.
 
 From the command line (repository root):
 ```bash

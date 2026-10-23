@@ -36,4 +36,14 @@ public class Cable extends Accessory {
         return String.format("Cable [%s] - %s | Length: %.1fm | Connector: %s | Price: $%.2f | Stock: %d", 
                 getId(), getTitle(), lengthMeters, connectorType, getPrice(), getStock());
     }
+
+    @Override
+    public ProductCategory getCategory() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public String getTypeCode() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

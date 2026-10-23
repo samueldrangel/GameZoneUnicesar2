@@ -56,4 +56,6 @@ public abstract class Warranty {
                 id, getWarrantyType(), product.getTitle(), sale.getSaleId(),
                 startDate, endDate, getAdditionalCost());
     }
+    
+    public abstract String getTypeCode();
 }

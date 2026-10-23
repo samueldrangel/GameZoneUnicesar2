@@ -21,4 +21,9 @@ public class VideoGame extends Product {
     public String getPlatform() { return platform; }
     public String getGenre() { return genre; }
     public String getAgeRating() { return ageRating; }
+
+    @Override
+    public ProductCategory getCategory() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }
