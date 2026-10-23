@@ -13,9 +13,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service layer class containing business logic and validation rules for accessories.
+ * Service layer class containing business logic and validation rules for
+ * accessories.
  */
 public class AccessoryService {
+
     private AccessoryRepository repository;
     private List<Accessory> accessories;
 
@@ -44,13 +46,9 @@ public class AccessoryService {
     }
 
     public List<Accessory> listAccessoriesByType(String type) {
+        String t = type == null ? "" : type.toUpperCase().replace(" ", "");
         return accessories.stream()
-                .filter(a -> {
-                    if ("CONTROLLER".equalsIgnoreCase(type)) return a instanceof Controller;
-                    if ("CABLE".equalsIgnoreCase(type)) return a instanceof Cable;
-                    if ("MEMORY".equalsIgnoreCase(type)) return a instanceof Memory;
-                    return false;
-                })
+                .filter(a -> a.getTypeCode().equals(t))
                 .collect(Collectors.toList());
     }
 
@@ -73,17 +71,19 @@ public class AccessoryService {
         }
         return false;
     }
-    
+
     /**
      * Increases the stock of an accessory.
-     * 
+     *
      * @param accessoryId the accessory identifier
      * @param quantity the quantity to restore; must be positive
      * @return false if not found or quantity not positive
      */
     public boolean restoreStock(String accessoryId, int quantity) {
-        if (quantity <= 0) return false;
-        
+        if (quantity <= 0) {
+            return false;
+        }
+
         Accessory accessory = findById(accessoryId);
         if (accessory != null) {
             accessory.setStock(accessory.getStock() + quantity); // Sumamos para restaurar stock
@@ -92,6 +92,9 @@ public class AccessoryService {
         }
         return false;
     }
-public boolean handles(Product item) { return item.getCategory() == ProductCategory.ACCESSORY; }
-    
+
+    public boolean handles(Product item) {
+        return item.getCategory() == ProductCategory.ACCESSORY;
+    }
+
 }
