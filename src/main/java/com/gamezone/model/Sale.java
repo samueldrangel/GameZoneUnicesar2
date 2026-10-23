@@ -18,7 +18,7 @@ public class Sale {
     private String appliedPromotionName;
     private double discountAmount;
     private double extendedWarrantyCost;
-    
+    public static final int RETURN_WINDOW_DAYS = 30;
 
     /**
      * Creates a sale without discount.
