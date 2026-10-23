@@ -3,18 +3,21 @@ package com.gamezone.service;
 import com.gamezone.model.BulkPurchaseDiscount;
 import com.gamezone.model.CategoryDiscount;
 import com.gamezone.model.PercentageDiscount;
+import com.gamezone.model.ProductCategory;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.persistence.PromotionRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * Business rules for promotions, including the selection of the best
- * promotion for a sale.
+ * Business rules for promotions, including the selection of the best promotion
+ * for a sale.
  */
 public class PromotionService {
+
     private final PromotionRepository repository;
     private final List<Promotion> promotions;
 
@@ -35,10 +38,12 @@ public class PromotionService {
      * @throws IllegalArgumentException if a value is invalid
      */
     public boolean registerPercentageDiscount(String id, String name, LocalDate start,
-                                              LocalDate end, double percentage) {
+            LocalDate end, double percentage) {
         validateCommon(id, name, start, end);
         validatePercentage(percentage);
-        if (findById(id) != null) return false;
+        if (findById(id) != null) {
+            return false;
+        }
         promotions.add(new PercentageDiscount(id, name, start, end, percentage));
         repository.saveAll(promotions);
         return true;
@@ -53,13 +58,18 @@ public class PromotionService {
     private static final List<String> ALLOWED_CATEGORIES = List.of("VIDEOGAME", "CONSOLE", "ACCESSORY");
 
     public boolean registerCategoryDiscount(String id, String name, LocalDate start,
-                                            LocalDate end, double percentage, String category) {
+            LocalDate end, double percentage, String category) {
         validateCommon(id, name, start, end);
         validatePercentage(percentage);
-        if (!ALLOWED_CATEGORIES.contains(category)) {
-            throw new IllegalArgumentException("La categoría debe ser VIDEOGAME, CONSOLE o ACCESSORY.");
+
+        boolean valid = Arrays.stream(ProductCategory.values()).anyMatch(c -> c.name().equals(category));
+        if (!valid) {
+            throw new IllegalArgumentException("La categoría debe ser " + allowedCategoriesText() + ".");
         }
-        if (findById(id) != null) return false;
+
+        if (findById(id) != null) {
+            return false;
+        }
         promotions.add(new CategoryDiscount(id, name, start, end, percentage, category));
         repository.saveAll(promotions);
         return true;
@@ -72,25 +82,31 @@ public class PromotionService {
      * @throws IllegalArgumentException if a value is invalid
      */
     public boolean registerBulkPurchaseDiscount(String id, String name, LocalDate start,
-                                                LocalDate end, int minimumQuantity,
-                                                double percentage) {
+            LocalDate end, int minimumQuantity,
+            double percentage) {
         validateCommon(id, name, start, end);
         validatePercentage(percentage);
         if (minimumQuantity < 1) {
             throw new IllegalArgumentException("La cantidad mínima debe ser al menos 1.");
         }
-        if (findById(id) != null) return false;
+        if (findById(id) != null) {
+            return false;
+        }
         promotions.add(new BulkPurchaseDiscount(id, name, start, end, minimumQuantity, percentage));
         repository.saveAll(promotions);
         return true;
     }
 
-    /** @return a copy of all registered promotions */
+    /**
+     * @return a copy of all registered promotions
+     */
     public List<Promotion> listAllPromotions() {
         return new ArrayList<>(promotions);
     }
 
-    /** @return the promotions valid on the current date */
+    /**
+     * @return the promotions valid on the current date
+     */
     public List<Promotion> listActivePromotions() {
         return activeOn(LocalDate.now());
     }
@@ -99,7 +115,8 @@ public class PromotionService {
      * Finds the valid promotion that grants the highest discount to the sale.
      *
      * @param sale the sale to evaluate
-     * @return the best promotion, or null if none applies or the best discount is zero
+     * @return the best promotion, or null if none applies or the best discount
+     * is zero
      */
     public Promotion findBestPromotionFor(Sale sale) {
         Promotion best = null;
@@ -122,7 +139,9 @@ public class PromotionService {
      */
     public Promotion findById(String id) {
         for (Promotion p : promotions) {
-            if (p.getId().equals(id)) return p;
+            if (p.getId().equals(id)) {
+                return p;
+            }
         }
         return null;
     }
@@ -130,7 +149,9 @@ public class PromotionService {
     private List<Promotion> activeOn(LocalDate date) {
         List<Promotion> result = new ArrayList<>();
         for (Promotion p : promotions) {
-            if (p.isActive(date)) result.add(p);
+            if (p.isActive(date)) {
+                result.add(p);
+            }
         }
         return result;
     }
@@ -151,5 +172,28 @@ public class PromotionService {
         if (percentage <= 0 || percentage > 100) {
             throw new IllegalArgumentException("El porcentaje debe estar entre 0 y 100.");
         }
+    }
+
+    /**
+     * Applies the best valid promotion to the sale, if any.
+     */
+    public void applyBestPromotion(Sale sale) {
+        Promotion best = findBestPromotionFor(sale);
+        if (best != null) {
+            sale.setAppliedPromotionName(best.getName());
+            sale.setDiscountAmount(best.calculateDiscount(sale));
+        }
+    }
+
+    private static String allowedCategoriesText() {
+        ProductCategory[] v = ProductCategory.values();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < v.length; i++) {
+            if (i > 0) {
+                sb.append(i == v.length - 1 ? " o " : ", ");
+            }
+            sb.append(v[i].name());
+        }
+        return sb.toString();   // VIDEOGAME, CONSOLE o ACCESSORY
     }
 }
