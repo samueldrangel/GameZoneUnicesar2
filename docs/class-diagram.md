@@ -1,54 +1,30 @@
 ```mermaid
 classDiagram
-    class RuntimeException
-    class GameZoneException {
-        <<abstract>>
-        -String errorCode
-        +getErrorCode() String
+    class SaleService {
+        -SaleRepository repository
+        -ProductService productService
+        -AccessoryService accessoryService
+        -PromotionService promotionService
+        -WarrantyService warrantyService
+        +registerSale(...) boolean
     }
-    class ResourceNotFoundException
-    class BusinessRuleException
-    class InvalidDataException
-    class PersistenceException
-    class ProductValidator {
-        +validateProductData(String id, String title, double price, int stock)$ void
-        +validateStockAvailability(Product p, int qty)$ void
-        +validateProductExists(Product p, String id)$ void
-    }
-    class PersonValidator {
-        +validatePersonData(String id, String name, String email, String phone)$ void
-        +validatePersonExists(Person p, String id)$ void
-        +validateUniquePerson(List~Person~ existing, String newId)$ void
-    }
-    class SaleValidator {
-        +validateSaleData(Customer c, Seller s, List~Product~ items)$ void
-        +validateSaleExists(Sale s, String id)$ void
-    }
-    class ProductService
-    class PersonService
-    class SaleService
-    class ProductRepository
-    class PersonRepository
-    class SaleRepository
-    class ConsoleMenu
-
-    RuntimeException <|-- GameZoneException
-    GameZoneException <|-- ResourceNotFoundException
-    GameZoneException <|-- BusinessRuleException
-    GameZoneException <|-- InvalidDataException
-    GameZoneException <|-- PersistenceException
-
-    ProductService ..> ProductValidator : calls
-    PersonService ..> PersonValidator : calls
-    SaleService ..> SaleValidator : calls
-    ProductValidator ..> InvalidDataException : throws
-    ProductValidator ..> BusinessRuleException : throws
-    ProductValidator ..> ResourceNotFoundException : throws
-    PersonValidator ..> InvalidDataException : throws
-    PersonValidator ..> BusinessRuleException : throws
-    SaleValidator ..> BusinessRuleException : throws
-    ProductRepository ..> PersistenceException : throws
-    PersonRepository ..> PersistenceException : throws
-    SaleRepository ..> PersistenceException : throws
-    ConsoleMenu ..> GameZoneException : catches by type
+    class WarrantyService
+    class ReturnService
+    class ConsoleMenu { +showMainMenu() void }
+    class CategoryDiscount { -String targetCategory }
+    class Product { <<abstract>> }
+    class Return
+    class Sale
+    SaleService ..> Product : instanceof
+    ReturnService ..> Product : instanceof
+    ReturnService --> SaleService
+    WarrantyService --> SaleRepository
+    ConsoleMenu --> SaleService
+    Return ..> Sale : reads discount
+    note for SaleService "V-01, V-02, V-07"
+    note for ReturnService "V-01, V-04, V-07, V-09"
+    note for WarrantyService "V-07"
+    note for ConsoleMenu "V-05, V-06"
+    note for CategoryDiscount "V-03"
+    note for Return "V-04"
 ```

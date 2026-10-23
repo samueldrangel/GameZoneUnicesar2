@@ -1,55 +1,27 @@
 ```mermaid
 graph TD
-    subgraph UI ["User Interface Layer (ui)"]
-        ConsoleMenu
-    end
-    subgraph Service ["Service Layer (service)"]
-        ProductService
-        AccessoryService
-        PersonService
-        PromotionService
-        WarrantyService
-        SaleService
-        ReturnService
-    end
-    subgraph Persistence ["Persistence Layer (persistence)"]
-        ProductRepository
-        AccessoryRepository
-        PersonRepository
-        PromotionRepository
-        WarrantyRepository
-        SaleRepository
-        ReturnRepository
-    end
-    subgraph Model ["Model Layer (model)"]
-        Person
-        Product
-        Accessory
-        Promotion
-        Warranty
-        Sale
-        Return
+    subgraph UI ["Capa de Interfaz (UI)"]
+        ConsoleMenu["ConsoleMenu (Monolítico)"]
     end
 
-    ConsoleMenu --> ProductService
-    ConsoleMenu --> AccessoryService
-    ConsoleMenu --> PersonService
-    ConsoleMenu --> PromotionService
-    ConsoleMenu --> WarrantyService
+    subgraph Service ["Capa de Negocio (Services)"]
+        SaleService["SaleService"]
+        ReturnService["ReturnService"]
+        WarrantyService["WarrantyService"]
+        ProductService["ProductService"]
+        AccessoryService["AccessoryService"]
+    end
+
+    subgraph Persistence ["Capa de Persistencia (Repositories)"]
+        SaleRepository["SaleRepository"]
+        ProductRepository["ProductRepository"]
+    end
+
     ConsoleMenu --> SaleService
     ConsoleMenu --> ReturnService
-
+    ConsoleMenu --> WarrantyService
     SaleService --> ProductService
     SaleService --> AccessoryService
-    SaleService --> PersonService
-    SaleService --> PromotionService
-    SaleService --> WarrantyService
-    ReturnService --> SaleService
-    ReturnService --> ProductService
-    ReturnService --> AccessoryService
-    ReturnService --> WarrantyService
-
-    Service --> Persistence
-    Service --> Model
-    Persistence --> Model
+    SaleService --> SaleRepository
+    WarrantyService --> SaleRepository
 ```
