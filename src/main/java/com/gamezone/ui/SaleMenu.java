@@ -27,6 +27,24 @@ public class SaleMenu {
         this.input = input;
         this.printer = printer;
     }
+    
+    public void show() {
+    int option;
+    do {
+        System.out.println("\n--- GESTIÓN DE VENTAS ---");
+        System.out.println("1. Listar ventas");
+        System.out.println("2. Registrar nueva venta (Multiproducto)");
+        System.out.println("0. Volver");
+        option = input.readInt("Seleccione una opción: ");
+
+        switch (option) {
+            case 1: listSales(); break;
+            case 2: registerSale(); break;
+            case 0: break;
+            default: System.out.println("Opción inválida.");
+        }
+    } while (option != 0);
+}
 
     public void listSales() {
         printer.printSales(saleService.listSales());

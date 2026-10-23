@@ -13,6 +13,26 @@ public class PersonMenu {
         this.personService = personService;
         this.input = input;
     }
+    
+    public void show() {
+    int option;
+    do {
+        System.out.println("\n--- GESTIÓN DE PERSONAS ---");
+        System.out.println("1. Listar personas (Clientes y vendedores)");
+        System.out.println("2. Agregar cliente");
+        System.out.println("3. Agregar vendedor");
+        System.out.println("0. Volver");
+        option = input.readInt("Seleccione una opción: ");
+
+        switch (option) {
+            case 1: listPersons(); break;
+            case 2: addCustomer(); break;
+            case 3: addSeller(); break;
+            case 0: break;
+            default: System.out.println("Opción inválida.");
+        }
+    } while (option != 0);
+}
 
     public void listPersons() {
         System.out.println("\n--- DIRECTORIO DE PERSONAS ---");

@@ -12,6 +12,26 @@ public class AccessoryMenu {
         this.accessoryService = accessoryService;
         this.input = input;
     }
+    
+    public void show() {
+    int option;
+    do {
+        System.out.println("\n--- GESTIÓN DE ACCESORIOS ---");
+        System.out.println("1. Registrar control");
+        System.out.println("2. Registrar cable");
+        System.out.println("3. Registrar memoria");
+        System.out.println("0. Volver");
+        option = input.readInt("Seleccione una opción: ");
+
+        switch (option) {
+            case 1: registerController(); break;
+            case 2: registerCable(); break;
+            case 3: registerMemory(); break;
+            case 0: break;
+            default: System.out.println("Opción inválida.");
+        }
+    } while (option != 0);
+}
 
     public void registerController() {
         String id = input.readLine("Ingrese ID: ");

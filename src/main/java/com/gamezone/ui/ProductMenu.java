@@ -2,32 +2,56 @@ package com.gamezone.ui;
 
 import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
+import com.gamezone.service.AccessoryService;
 import com.gamezone.service.ProductService;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProductMenu {
     private final ProductService productService;
+    private final AccessoryService accessoryService; // <-- Asegúrate de tener este atributo
     private final ConsoleInput input;
     private final ConsolePrinter printer;
 
-    public ProductMenu(ProductService productService, ConsoleInput input, ConsolePrinter printer) {
+    // El constructor DEBE recibir accessoryService
+    public ProductMenu(ProductService productService, AccessoryService accessoryService, ConsoleInput input, ConsolePrinter printer) {
         this.productService = productService;
+        this.accessoryService = accessoryService; // <-- Y asignarlo aquí
         this.input = input;
         this.printer = printer;
     }
+    
+    public void show() {
+    int option;
+    do {
+        System.out.println("\n--- GESTIÓN DE PRODUCTOS ---");
+        System.out.println("1. Listar productos y accesorios");
+        System.out.println("2. Agregar videojuego");
+        System.out.println("3. Agregar consola");
+        System.out.println("0. Volver");
+        option = input.readInt("Seleccione una opción: ");
 
-    public void listProductsAndAccessories(com.gamezone.service.AccessoryService accessoryService) {
-        System.out.println("\n--- INVENTARIO DE PRODUCTOS Y ACCESORIOS ---");
-        System.out.println("Productos:");
-        for (Product p : productService.listAllProducts()) {
-            System.out.println(" - " + p.getDescription());
+        switch (option) {
+            case 1: listProductsAndAccessories(this.accessoryService); break;
+            case 2: addVideoGame(); break;
+            case 3: addConsole(); break;
+            case 0: break;
+            default: System.out.println("Opción inválida.");
         }
-        System.out.println("Accesorios:");
-        for (com.gamezone.model.Accessory a : accessoryService.listAllAccessories()) {
-            System.out.println(" - " + a.getDescription());
-        }
+    } while (option != 0);
+}
+
+    public void listProductsAndAccessories(AccessoryService accessoryService) {
+    System.out.println("\n--- INVENTARIO DE PRODUCTOS Y ACCESORIOS ---");
+    System.out.println("Productos:");
+    for (Product p : productService.listAllProducts()) {
+        System.out.println(" - " + p.getDescription());
     }
+    System.out.println("Accesorios:");
+    for (com.gamezone.model.Accessory a : accessoryService.listAllAccessories()) {
+        System.out.println(" - " + a.getDescription());
+    }
+}
 
     public void addVideoGame() {
         String id = input.readLine("Ingrese ID: ");
