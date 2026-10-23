@@ -12,20 +12,19 @@ public class WarrantyRepository {
 
     /** @param warranties the warranties to save */
     public void saveAll(List<Warranty> warranties) {
-        try {
-            Path path = Paths.get(FILE_PATH);
-            if (path.getParent() != null) Files.createDirectories(path.getParent());
-            try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_PATH))) {
-                for (Warranty w : warranties) {
-                    String type = (w instanceof ExtendedWarranty) ? "EXTENDED" : "BASIC";
-                    writer.println(type + "," + w.getId() + "," + w.getSale().getSaleId() + ","
-                            + w.getProduct().getId() + "," + w.getStartDate());
-                }
+    try {
+        Path path = Paths.get(FILE_PATH);
+        if (path.getParent() != null) Files.createDirectories(path.getParent());
+        try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_PATH))) {
+            for (Warranty w : warranties) {
+                writer.println(w.getTypeCode() + "," + w.getId() + "," + w.getSale().getSaleId() + ","
+                        + w.getProduct().getId() + "," + w.getStartDate());
             }
-        } catch (IOException e) {
-            System.err.println("Error saving warranties: " + e.getMessage());
         }
+    } catch (IOException e) {
+        System.err.println("Error saving warranties: " + e.getMessage());
     }
+}
 
     /**
      * @param sales    all sales, used to resolve references
