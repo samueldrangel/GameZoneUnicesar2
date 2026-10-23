@@ -17,4 +17,9 @@ public class BasicWarranty extends Warranty {
 
     @Override
     public double getAdditionalCost() { return 0.0; }
+
+    @Override
+    public String getTypeCode() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

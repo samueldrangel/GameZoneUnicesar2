@@ -57,4 +57,9 @@ public class CategoryDiscount extends Promotion {
         return item.getCategory().name().equals(targetCategory);
     }
 
+    @Override
+    public String getTypeCode() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 }
