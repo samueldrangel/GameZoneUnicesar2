@@ -1,52 +1,348 @@
-# Informe de Auditoría de Código: Principios GRASP
-**Auditor:** Sistema de Evaluación de Arquitectura de Software  
-**Desarrollador Evaluado:** Samuel David Rangel Martínez (Developer 2 & Líder Técnico)  
-**Proyecto:** GameZone - Sistema de Gestión e Inventario  
-**Fecha:** 22 de Octubre, 2026  
+Here is the English Markdown version ready to save as grasp_audit_samuel_rangel.md:
+
+# GRASP ARCHITECTURE AUDIT AND COMMIT TRACEABILITY REPORT
+
+**Project:** GameZone Unicesar – Commercial Management and Inventory System
+
+**Organization:** Popular University of Cesar (UPC) – Faculty of Engineering and Technology
+
+**Base Repository:** https://github.com/samueldrangel/GameZoneUnicesar2
+
+**Audited State:** `develop` branch @ Commit `237669c74114f207ebd8e2dba84ecad0dcb6ebd7` (Merge PR #31)
+
+**Date:** October 22, 2026
 
 ---
 
-## 1. Alcance de la Auditoría
+# 1. Audit Scope and Technical Overview
 
-La presente auditoría evalúa la arquitectura general, componentes de orquestación y módulos desarrollados por **Samuel David Rangel Martínez (Developer 2 & Líder Técnico)**:
-* **Módulos de Negocio (Developer 2):** `PersonService`, `AccessoryService`, `PromotionService`, `ReturnService`, `WarrantyService`, repositorios y validadores asociados (`AccessoryValidator`, `PromotionValidator`, `WarrantyValidator`).
-* **Módulos de Líder Técnico y Core:** `Sale`, `SaleDetail`, `SaleService`, `SaleRepository`, `SaleValidator`, paquete UI (`Main`, `Menu`, `SubMenu`).
+1. **Audited Developer:** Samuel David Rangel Martínez (`samueldrangel`) – Developer 2 & Technical Leader
 
----
-
-## 2. Trazabilidad con el Historial de Commits
-
-A continuación se detalla cómo los *commits* del repositorio respaldan las refactorizaciones y estructuración arquitectónica lideradas por Samuel Rangel:
-
-| Hash Commit | Autor | Módulos / Archivos Afectados | Relevancia en Auditoría GRASP |
-| :--- | :--- | :--- | :--- |
-| `237669c7` | Samuel R. | `Menu`, `SaleService`, `exceptions` | Centralización del manejo de excepciones de flujo de negocio (**B-1**, **FD-2**). |
-| `34b46212` | Samuel R. | `Menu.displayMenu`, `SubMenu` | Enrutamiento e interceptación centralizada de errores en la interfaz de consola (**V-04**, **V-05**). |
-| `a062a1b8` | Samuel R. | `SaleService`, `SaleValidator` | Desacoplamiento de la lógica de validación de ventas hacia `SaleValidator` (**V-01**, **V-02**). |
-| `a99e48e2` | Samuel R. | `PersonService`, `PersonValidator` | Delegación de reglas de validación de personas hacia `PersonValidator` (**V-10**, **V-11**). |
+2. **Ownership Criteria:**
+   - Sales Core (`Sale`, `SaleDetail`, `SaleService`)
+   - Global Persistence (`SaleRepository`, `PersonRepository`)
+   - User Interface and Orchestration (`Menu`, `SubMenu`, `Main`)
+   - Warranty Integration (`WarrantyService`)
 
 ---
 
-## 3. Matriz de Hallazgos GRASP y Propuestas de Solución
+## 1.1 Module-Class Matrix by Commit History
 
-| ID | Patrón GRASP | Módulo / Clases | Diagnóstico del Problema | Solución Técnica (Acoplada al Repositorio) |
-| :--- | :--- | :--- | :--- | :--- |
-| **V-01 (Leader)** | **Polymorphism** | `SaleService`, `SubMenu` | Múltiples verificaciones con `instanceof` para ajustar inventario o asignar garantías según el tipo de producto. | Definir contratos polimórficos en `Product` para la actualización de stock y aplicación de reglas de venta. |
-| **V-02 (Leader)** | **Information Expert** | `SaleService` | Búsqueda manual iterativa en catálogos de productos y accesorios desde el servicio de ventas. | Delegar la búsqueda a `ProductService.findById` y `AccessoryService.findById` y consumir solo el resultado. |
-| **V-03 (Leader)** | **Creator** | `SubMenu` | La capa de presentación instancia directamente objetos `SaleDetail` calculando precios unitarios. | Aplicar el patrón Creator en `Sale`, proveyendo el método `addItem(Product, int)` para crear los detalles internamente. |
-| **V-04 (Leader)** | **High Cohesion** | `SubMenu` | Concentración masiva de responsabilidades de flujo de UI en una sola clase (>600 líneas de código). | Descomponer `SubMenu` en controladores especializados por dominio (`ProductMenu`, `SaleMenu`, `ReturnMenu`, `PersonMenu`). |
-| **V-05 (Leader)** | **Pure Fabrication** | `Menu`, `SubMenu` | Duplicación de lógica de captura y conversión de entradas por consola (`readInt`, `readDouble`). | Construir la clase utilitaria de infraestructura `ConsoleInput` dentro del paquete `com.gamezone.ui`. |
-| **V-06 (Leader)** | **Low Coupling** | `Menu`, `SubMenu` | `Menu` recibe en su constructor 7 servicios que no utiliza directamente, solo los redirige a `SubMenu`. | Inyectar a cada menú especializado únicamente las dependencias de servicio estrictamente necesarias. |
-| **V-07 (Leader/Dev 2)** | **Low Coupling** | `SaleRepository` | El método `loadAll` exige recibir la lista de promociones (`List<? extends Promotion>`) sin llegar a usarla. | Eliminar el parámetro de promociones no utilizado en `SaleRepository`, `SaleService` y `WarrantyRepository`. |
-| **V-08 (Leader)** | **High Cohesion** | `Sale` | La entidad `Sale` asume la responsabilidad de formatear el recibo textual de la transacción (`generateReceipt`). | Trasladar la generación de texto a la clase de presentación `SaleReceiptFormatter` en el paquete `ui`. |
-| **V-09 (Leader/Dev 2)** | **Indirection** | Servicios de Dominio | Conexión directa entre servicios de negocio (`SaleService`, `ReturnService`, etc.) e implementaciones CSV concretas. | Interponer interfaces de almacenamiento (`SaleStorage`, `ReturnStorage`, etc.) para desacoplar el motor de persistencia. |
-| **V-10 (Dev 2)** | **Pure Fabrication** | Repositorios (`Person`, `Accessory`, etc.) | Duplicidad del código de lectura/escritura de archivos y manejo de buffers en múltiples repositorios. | Centralizar la gestión genérica de archivos CSV en un componente `CsvSupport`. |
+The following matrix validates the ownership and responsibilities of the Technical Leader according to Git Blame history and Pull Requests.
+
+| Module / Requirement | Classes / Components Covered | Key Commit Hashes | Associated Commit Message |
+|----------------------|-----------------------------|-------------------|---------------------------|
+| **Sales Core (Workshop 1)** | `Sale`, `SaleDetail`, `SaleService`, `SaleRepository` | `78861837`, `64f51979`, `204cbcc4`, `84989378` | `refactor: unify sale registration flow and extend sale persistence` |
+| **People Management (Workshop 1)** | `Person`, `Customer/Client`, `Seller`, `PersonService`, `PersonRepository` | `82b20d94`, `43ecd49c`, `d512715a` | `feat: implement PersonService and file persistence` |
+| **Console UI (Req. 5)** | `ConsoleUI`, `Menu`, `SubMenu`, `Main` | `2df6f631`, `34b46212`, `71fe50cc` | `refactor: route menu operations through the exception handler` |
+| **Warranties and Returns (Req. 3 & 4)** | Return cancellation and financial impact integration | `0db6bb13`, `126e84b6`, `02b81b97` | `feat: integrate WarrantyService into ReturnService and cancel warranties` |
+| **Exceptions (Req. 6)** | Validation delegation and global exception handling | `a062a1b8`, `a99e48e2`, `16844295` | `refactor: delegate validations to validators and wrap IOException` |
 
 ---
 
-## 4. Dictamen y Plan de Acción
+# 2. Detailed GRASP Evaluation Results
 
-1. **Descomposición de la Capa de Interfaz (UI):** Dividir `SubMenu` en controladores por módulo y extraer la captura de entrada a `ConsoleInput`.
-2. **Inyección de Abstracciones de Persistencia:** Aplicar *Indirection* introduciendo interfaces `Storage` en todos los servicios de dominio.
-3. **Refactorización del Flujo de Venta:** Transferir la creación de `SaleDetail` a `Sale` y mover el formateo de recibos fuera del modelo de dominio.
+| GRASP Pattern | Verdict | Summary Justification |
+|--------------|----------|----------------------|
+| Information Expert | MODERATE VIOLATION | Manual iterative catalog searches using streams inside SaleService. |
+| Creator | MODERATE VIOLATION | SubMenu directly instantiates SaleDetail and calculates unit prices. |
+| Controller | COMPLIANT | Menu and SubMenu correctly channel requests to the domain layer and manage user interaction. |
+| Low Coupling | CRITICAL VIOLATION | Services are tightly coupled to concrete CSV persistence classes and obsolete parameters. |
+| High Cohesion | CRITICAL VIOLATION | SubMenu is a monolithic class (>600 LOC) and processSale performs eight responsibilities. |
+| Polymorphism | CRITICAL VIOLATION | Repeated use of instanceof to update stock and assign warranties. |
+| Pure Fabrication | MODERATE VIOLATION | Console input logic duplicated between Menu and SubMenu. |
+| Indirection | CRITICAL VIOLATION | Direct connections between business services and storage implementations. |
+| Protected Variations | CRITICAL VIOLATION | Service layer is fragile against changes in technology or product types. |
+
+---
+
+# 3. Technical Violations and Refactoring Plan
+
+## LEAD-V-01: View Layer Monolith with Multiple Responsibilities (`SubMenu`)
+
+- **Violated GRASP Pattern:** High Cohesion
+- **Related Commits:** `2df6f631`, `84989378`
+- **Location:** `SubMenu.java` (627 lines of code)
+
+### Evidence
+
+```java
+public void showProductSubMenu() { ... }
+public void showAccessorySubMenu() { ... }
+public void showPersonSubMenu() { ... }
+public void showPromotionSubMenu() { ... }
+public void showReturnSubMenu() { ... }
+public void showWarrantySubMenu() { ... }
+public void processSaleForm() { ... }
 ```
+
+### Explanation
+
+The class is responsible for presentation, input collection, validation, and navigation across seven system modules, violating the High Cohesion principle.
+
+### Proposed Solution
+
+Split `SubMenu` into specialized UI controllers:
+
+- `ProductMenu`
+- `SaleMenu`
+- `PersonMenu`
+- `ReturnMenu`
+- `WarrantyMenu`
+
+---
+
+## LEAD-V-02: Manual Type Evaluation for Inventory and Warranties
+
+- **Violated GRASP Pattern:** Polymorphism / Protected Variations
+- **Related Commits:** `84781677`, `84989378`
+- **Location:** `SaleService.java`, lines 108–112 and 154–158
+
+### Evidence
+
+```java
+if (product instanceof Accessory) {
+    accessoryService.updateStock(product.getId(), quantity);
+} else {
+    productService.updateStock(product.getId(), quantity);
+}
+
+if (product instanceof Console) {
+    warrantyService.assignBasicWarranty(sale, (Console) product);
+}
+```
+
+### Explanation
+
+`SaleService` explicitly checks concrete types using `instanceof` to decide inventory update and warranty assignment behavior.
+
+### Proposed Solution
+
+Introduce an `InventoryCoordinator` facade and implement polymorphic behavior:
+
+```java
+product.supportsWarranty();
+```
+
+---
+
+## LEAD-V-03: Direct Coupling to Concrete Persistence Classes
+
+- **Violated GRASP Pattern:** Indirection / Low Coupling
+- **Related Commits:** `78861837`, `82b20d94`
+
+### Evidence
+
+```java
+public class SaleService {
+
+    private final SaleRepository repository;
+
+    public SaleService(SaleRepository repository) {
+        this.repository = repository;
+    }
+}
+```
+
+### Explanation
+
+Business services depend directly on CSV repositories, limiting unit testing and future database migrations.
+
+### Proposed Solution
+
+Introduce abstraction interfaces:
+
+- `SaleStorage`
+- `PersonStorage`
+
+and inject them into domain services.
+
+---
+
+## LEAD-V-04: Monolithic Sales Processing Method
+
+- **Violated GRASP Pattern:** High Cohesion
+- **Related Commit:** `84989378`
+- **Location:** `SaleService.processSale`
+
+### Explanation
+
+The method performs all of the following:
+
+1. Customer lookup
+2. Input validation
+3. Stock verification
+4. Promotion calculation
+5. Warranty handling
+6. Sale construction
+7. Persistence
+8. History updates
+
+### Proposed Solution
+
+Delegate concerns to specialized collaborators:
+
+- `PromotionService`
+- `WarrantyService`
+- `InventoryCoordinator`
+
+---
+
+## LEAD-V-05: External Catalog Searches Using Streams
+
+- **Violated GRASP Pattern:** Information Expert
+- **Related Commit:** `78861837`
+
+### Evidence
+
+```java
+return productService.listAll().stream()
+    .filter(p -> p != null && productId.equals(p.getId()))
+    .findFirst()
+    .orElseGet(() ->
+        accessoryService.listAllAccessories()
+            .stream() ...
+    );
+```
+
+### Explanation
+
+`SaleService` retrieves entire collections and performs manual searches instead of delegating to the responsible service.
+
+### Proposed Solution
+
+Delegate directly:
+
+```java
+productService.findById(id);
+```
+
+---
+
+## LEAD-V-06: Duplicated Console Input Logic
+
+- **Violated GRASP Pattern:** Pure Fabrication
+- **Related Commits:** `17f724d`, `2df6f63`
+
+### Evidence
+
+```java
+private int readInt() {
+    try {
+        return Integer.parseInt(scanner.nextLine().trim());
+    } catch (NumberFormatException e) {
+        return -1;
+    }
+}
+```
+
+### Proposed Solution
+
+Create a utility class:
+
+```java
+com.gamezone.ui.ConsoleInput
+```
+
+to centralize safe input parsing and validation.
+
+---
+
+## LEAD-V-07: Unnecessary Dependency Passing
+
+- **Violated GRASP Pattern:** Low Coupling
+- **Related Commit:** `2df6f631`
+
+### Evidence
+
+```java
+public Menu(
+    ProductService productService,
+    AccessoryService accessoryService,
+    PersonService personService,
+    PromotionService promotionService,
+    SaleService saleService,
+    ReturnService returnService,
+    WarrantyService warrantyService) {
+
+    this.subMenu = new SubMenu(
+        productService,
+        accessoryService,
+        ...
+    );
+}
+```
+
+### Explanation
+
+`Menu` receives seven services exclusively to forward them to `SubMenu`.
+
+### Proposed Solution
+
+Instantiate and inject individual menu components directly from `Main`.
+
+---
+
+## LEAD-V-08: Obsolete Unused Parameter in Sale Persistence
+
+- **Violated GRASP Pattern:** Low Coupling
+- **Related Commit:** `64f51979`
+
+### Evidence
+
+```java
+public List<Sale> loadAll(
+    List<Customer> clients,
+    List<Seller> sellers,
+    List<Product> products,
+    List<Accessory> accessories,
+    List<? extends Promotion> promotions) {
+
+    // promotions is never used
+}
+```
+
+### Proposed Solution
+
+Remove the `promotions` parameter and update all callers in:
+
+- `SaleService`
+- `WarrantyRepository`
+
+---
+
+# 4. Refactoring and Non-Regression Protocol
+
+To ensure that refactoring activities do not alter system behavior, the following integration test suite must be executed after every Pull Request.
+
+```bash
+# Non-regression validation script
+./docs/regression/run.sh
+```
+
+## Reference Validation Figures (Test Sale)
+
+| Concept | Value |
+|----------|----------|
+| Gross Subtotal | $2,350,000 |
+| Promotional Discount (15%) | -$352,500 |
+| Extended Warranty Added | +$200,000 |
+| **Expected Transaction Total** | **$2,197,500** |
+
+---
+
+# Overall Conclusion
+
+The module owned by **Samuel David Rangel Martínez** contains a critical portion of the system architecture, particularly regarding sales management, persistence, warranty integration, and user interface orchestration.
+
+While the implementation adequately satisfies the **Controller** pattern, significant violations were identified in **High Cohesion**, **Low Coupling**, **Polymorphism**, **Indirection**, and **Protected Variations**. These architectural weaknesses increase maintenance costs, reduce extensibility, and make the system more resistant to future technological changes.
+
+Refactoring efforts should prioritize:
+
+1. Decomposing `SubMenu` into specialized UI components.
+2. Replacing concrete persistence dependencies with abstractions.
+3. Eliminating `instanceof` structures through polymorphic designs.
+4. Delegating sales-processing responsibilities to dedicated coordinators and services.
+5. Improving testability through dependency inversion and interface-based architecture.
+
+These changes would substantially improve compliance with GRASP principles and increase the long-term maintainability of the GameZone Unicesar system.
