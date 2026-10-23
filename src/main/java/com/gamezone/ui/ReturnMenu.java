@@ -14,7 +14,7 @@ public class ReturnMenu {
         this.input = input;
     }
 
-    public void showReturnMenu() {
+    public void show() {
         int option;
         do {
             System.out.println("\n--- GESTIÓN DE DEVOLUCIONES ---");

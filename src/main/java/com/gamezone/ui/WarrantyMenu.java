@@ -13,7 +13,7 @@ public class WarrantyMenu {
         this.input = input;
     }
 
-    public void showWarrantyMenu() {
+    public void show() {
         int option;
         do {
             System.out.println("\n--- GESTIÓN DE GARANTÍAS ---");
