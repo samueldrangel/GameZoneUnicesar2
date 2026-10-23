@@ -4,6 +4,8 @@ import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.Controller;
 import com.gamezone.model.Memory;
+import com.gamezone.model.Product;
+import com.gamezone.model.ProductCategory;
 import com.gamezone.persistence.AccessoryRepository;
 
 import java.util.ArrayList;
@@ -90,4 +92,6 @@ public class AccessoryService {
         }
         return false;
     }
+public boolean handles(Product item) { return item.getCategory() == ProductCategory.ACCESSORY; }
+    
 }
