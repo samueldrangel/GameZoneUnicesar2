@@ -36,4 +36,9 @@ public class Memory extends Accessory {
         return String.format("Memory [%s] - %s | Capacity: %dGB | Type: %s | Price: $%.2f | Stock: %d", 
                 getId(), getTitle(), capacityGb, memoryType, getPrice(), getStock());
     }
+
+    @Override
+    public ProductCategory getCategory() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

@@ -26,4 +26,9 @@ public class Controller extends Accessory {
         return String.format("Controller [%s] - %s | Connection: %s | Price: $%.2f | Stock: %d", 
                 getId(), getTitle(), connectionType, getPrice(), getStock());
     }
+
+    @Override
+    public ProductCategory getCategory() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

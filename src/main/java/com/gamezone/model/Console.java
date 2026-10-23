@@ -21,4 +21,9 @@ public class Console extends Product {
     public String getBrand() { return brand; }
     public String getModel() { return model; }
     public String getGeneration() { return generation; }
+
+    @Override
+    public ProductCategory getCategory() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }
