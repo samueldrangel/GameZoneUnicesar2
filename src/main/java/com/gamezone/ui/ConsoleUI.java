@@ -533,7 +533,7 @@ public class ConsoleUI {
 
         List<String> extendedIds = new ArrayList<>();
         for (Product item : items) {
-            if (item instanceof Console && !extendedIds.contains(item.getId())) {
+            if (item.supportsWarranty() && !extendedIds.contains(item.getId())) {
                 if (readLine("¿Agregar garantía extendida a " + item.getTitle() + "? (s/n): ")
                         .equalsIgnoreCase("s")) {
                     extendedIds.add(item.getId());
