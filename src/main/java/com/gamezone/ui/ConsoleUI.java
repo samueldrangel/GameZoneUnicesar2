@@ -2,6 +2,8 @@ package com.gamezone.ui;
 
 import com.gamezone.model.*;
 import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.PersonRepository;
+import com.gamezone.persistence.ProductRepository;
 import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SaleRepository;
@@ -26,37 +28,61 @@ import java.util.Scanner;
  */
 public class ConsoleUI {
 
-    private ProductService productService;
-    private AccessoryService accessoryService;
-    private PersonService personService;
-    private PromotionService promotionService;
-    private WarrantyService warrantyService; // Servicio de garantías integrado
-    private SaleService saleService;
-    private ReturnService returnService; // Servicio de devoluciones integrado
-    private Scanner scanner;
+    private final ProductService productService;
+    private final AccessoryService accessoryService;
+    private final PersonService personService;
+    private final PromotionService promotionService;
+    private final WarrantyService warrantyService;
+    private final SaleService saleService;
+    private final ReturnService returnService;
+    private final Scanner scanner;
 
     public ConsoleUI() {
+        // 1. Servicios base (aprovechando sus constructores por defecto o explícitos)
         this.productService = new ProductService();
         this.accessoryService = new AccessoryService(new AccessoryRepository());
         this.personService = new PersonService();
         this.promotionService = new PromotionService(new PromotionRepository());
 
-        // Inicialización del servicio de garantías con su repositorio
-        this.warrantyService = new WarrantyService(new WarrantyRepository());
+        // 2. Consolidación del catálogo para ventas y garantías
+        List<Product> allItems = new ArrayList<>(productService.listAllProducts());
+        allItems.addAll(accessoryService.listAllAccessories());
 
-        this.saleService = new SaleService(new SaleRepository(), productService, accessoryService, personService, promotionService, warrantyService);
-
-        // Inicialización correcta de ReturnService con sus dependencias
-        ReturnRepository returnRepository = new ReturnRepository();
-
-        this.returnService = new ReturnService(
-                returnRepository,
-                saleService,
-                productService,
-                accessoryService,
-                warrantyService,
-                returnRepository.loadAll(saleService.listAllSales())
+        SaleCatalog catalog = new SaleCatalog(
+            new SaleRepository(), 
+            personService.listAllPersons(), 
+            allItems
         );
+        
+        // 3. Coordinador de inventario polimórfico (InventoryService)
+        List<InventoryService> services = new ArrayList<>();
+        services.add((InventoryService) productService);
+        services.add((InventoryService) accessoryService);
+
+        InventoryCoordinator inventory = new InventoryCoordinator(services);
+
+        // 4. Servicios dependientes del catálogo y coordinador
+        this.warrantyService = new WarrantyService(
+            new WarrantyRepository(), 
+            catalog, 
+            allItems
+        );
+        
+        this.saleService = new SaleService(
+            catalog, 
+            inventory, 
+            promotionService, 
+            warrantyService
+        );
+        
+        ReturnRepository returnRepository = new ReturnRepository();
+        this.returnService = new ReturnService(
+            returnRepository, 
+            catalog, 
+            inventory, 
+            warrantyService
+        );
+
         this.scanner = new Scanner(System.in);
     }
 
@@ -459,7 +485,7 @@ public class ConsoleUI {
 
     private void listSales() {
         System.out.println("\n--- TRANSACCIONES DE VENTAS ---");
-        for (Sale s : saleService.listAllSales()) {
+        for (Sale s : saleService.listSales()) {
             System.out.println(s.generateReceipt());
             System.out.println("----------------------------------------");
         }
