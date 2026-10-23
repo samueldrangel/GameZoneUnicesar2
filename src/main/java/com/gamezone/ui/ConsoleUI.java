@@ -1,12 +1,12 @@
+package com.gamezone.ui;
 
-import com.gamezone.ui.AccessoryMenu;
-import com.gamezone.ui.ConsoleInput;
-import com.gamezone.ui.PersonMenu;
-import com.gamezone.ui.ProductMenu;
-import com.gamezone.ui.PromotionMenu;
-import com.gamezone.ui.ReturnMenu;
-import com.gamezone.ui.SaleMenu;
-import com.gamezone.ui.WarrantyMenu;
+import com.gamezone.model.*;
+import com.gamezone.persistence.*;
+import com.gamezone.service.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 public class ConsoleUI {
     private final ConsoleInput input;
@@ -17,25 +17,89 @@ public class ConsoleUI {
     private final PromotionMenu promotionMenu;
     private final WarrantyMenu warrantyMenu;
     private final ReturnMenu returnMenu;
-    // constructor assigns the eight collaborators
 
+    // Constructor por defecto que inicializa todo internamente
     public ConsoleUI() {
-        this.input = null;
-        this.productMenu = null;
-        this.accessoryMenu = null;
-        this.personMenu = null;
-        this.saleMenu = null;
-        this.promotionMenu = null;
-        this.warrantyMenu = null;
-        this.returnMenu = null;
+        // 1. Servicios base y repositorios
+        ProductService productService = new ProductService();
+        AccessoryService accessoryService = new AccessoryService(new AccessoryRepository());
+        PersonService personService = new PersonService();
+        PromotionService promotionService = new PromotionService(new PromotionRepository());
+
+        // 2. Catálogo y coordinador de inventario
+        List<Product> allItems = new ArrayList<>(productService.listAllProducts());
+        allItems.addAll(accessoryService.listAllAccessories());
+
+        SaleCatalog catalog = new SaleCatalog(
+            new SaleRepository(), 
+            personService.listAllPersons(), 
+            allItems
+        );
+        
+        List<InventoryService> services = new ArrayList<>();
+        services.add((InventoryService) productService);
+        services.add((InventoryService) accessoryService);
+        InventoryCoordinator inventory = new InventoryCoordinator(services);
+
+        // 3. Servicios dependientes
+        WarrantyService warrantyService = new WarrantyService(
+            new WarrantyRepository(), 
+            catalog, 
+            allItems
+        );
+        
+        SaleService saleService = new SaleService(
+            catalog, 
+            inventory, 
+            promotionService, 
+            warrantyService
+        );
+        
+        ReturnRepository returnRepository = new ReturnRepository();
+        ReturnService returnService = new ReturnService(
+            returnRepository, 
+            catalog, 
+            inventory, 
+            warrantyService
+        );
+
+        // 4. Utilidades de consola y menús
+        Scanner scanner = new Scanner(System.in);
+        this.input = new ConsoleInput(scanner);
+        ConsolePrinter printer = new ConsolePrinter();
+
+        this.productMenu = new ProductMenu(productService, accessoryService, input, printer);
+        this.accessoryMenu = new AccessoryMenu(accessoryService, input);
+        this.personMenu = new PersonMenu(personService, input);
+        this.saleMenu = new SaleMenu(saleService, personService, productService, accessoryService, input, printer);
+        this.promotionMenu = new PromotionMenu(promotionService, input);
+        this.warrantyMenu = new WarrantyMenu(warrantyService, input);
+        this.returnMenu = new ReturnMenu(returnService, input);
     }
 
-    /** Shows the main menu until the user exits. */
+    /** Método de arranque llamado desde Main. */
+    public void start() {
+        showMainMenu();
+    }
+
+    /** Muestra el menú principal. */
     public void showMainMenu() {
         int option;
         do {
-            // same println lines as today
+            System.out.println("\n========================================");
+            System.out.println("    GAMEZONE UNICESAR - MENÚ PRINCIPAL  ");
+            System.out.println("========================================");
+            System.out.println("1. Productos");
+            System.out.println("2. Accesorios");
+            System.out.println("3. Personas");
+            System.out.println("4. Ventas");
+            System.out.println("5. Promociones");
+            System.out.println("6. Garantías");
+            System.out.println("7. Devoluciones");
+            System.out.println("0. Salir");
+            
             option = input.readInt("Seleccione una opción: ");
+            
             switch (option) {
                 case 1: productMenu.show(); break;
                 case 2: accessoryMenu.show(); break;

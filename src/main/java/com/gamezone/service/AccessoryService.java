@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * Service layer class containing business logic and validation rules for
  * accessories.
  */
-public class AccessoryService {
+public class AccessoryService implements InventoryService {
 
     private AccessoryRepository repository;
     private List<Accessory> accessories;
