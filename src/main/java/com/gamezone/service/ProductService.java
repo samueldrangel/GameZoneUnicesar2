@@ -89,4 +89,9 @@ public class ProductService {
         }
         return updateStock(productId, quantity);
     }
+
+    
+    public boolean handles(Product item) {
+        return item.getCategory() != ProductCategory.ACCESSORY;
+    }
 }
